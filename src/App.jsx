@@ -620,3 +620,75 @@ export default function App() {
     </div>
   );
 }
+import { useState, useMemo } from "react";
+import CategoriesDrawer from "./components/CategoriesDrawer";
+// ...ייבוא המלאי שלך
+import inventory from "../public/inventory.json"; // או טעינה מ-CSV אצלך
+
+export default function App() {
+  const [category, setCategory] = useState(null);
+
+  // מסנן מלאי לפי הקטגוריה שנבחרה
+  const filtered = useMemo(() => {
+    if (!category) return inventory;
+    return inventory.filter((car) => {
+      // נורמליזציה: יש לך field כמו car.category או car.fuel
+      const cat = (car.category || car.fuel || "").trim();
+      if (category === "בנזין/דיזל") return /בנזין|דיזל/i.test(cat);
+      return cat === category;
+    });
+  }, [category]);
+
+  return (
+    <div dir="rtl">
+      {/* כפתור + מגירה */}
+      <CategoriesDrawer current={category} onSelect={setCategory} />
+
+      {/* ...כותרת/הרואו/מחשבון וכו'... */}
+
+      {/* רשימת המלאי */}
+      <section id="inventory" style={{ padding: "16px 12px" }}>
+        {!category ? (
+          <h2 style={{margin: "6px 0 14px 0"}}>כל הדגמים</h2>
+        ) : (
+          <h2 style={{margin: "6px 0 14px 0"}}>
+            מציג: <span style={{fontWeight:"700"}}>{category}</span>
+            <button
+              onClick={() => setCategory(null)}
+              style={{
+                marginInlineStart: 10, border: "1px solid #e5e7eb",
+                borderRadius: 10, padding: "2px 8px", background: "#fff"
+              }}
+            >
+              ניקוי סינון
+            </button>
+          </h2>
+        )}
+
+        <div style={{display:"grid", gap: 12}}>
+          {filtered.map((car) => (
+            <article key={car.id} style={{border:"1px solid #e5e7eb", borderRadius: 14, padding: 12}}>
+              <div style={{display:"flex", justifyContent:"space-between", alignItems:"center"}}>
+                <strong>{car.title}</strong>
+                <small style={{opacity:.7}}>{car.category || car.fuel}</small>
+              </div>
+              {/* תמונה */}
+              {car.image && (
+                <img
+                  src={car.image}
+                  alt={car.title}
+                  style={{width:"100%", borderRadius:12, marginTop:8, background:"#f8fafc"}}
+                />
+              )}
+              {/* מידע נוסף... */}
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* עוגני ניווט ל"צור קשר" ו"מועדון" */}
+      <section id="contact" style={{padding:"52px 16px"}}>…טופס צור קשר…</section>
+      <section id="club" style={{padding:"52px 16px"}}>…מועדון לקוחות R&M…</section>
+    </div>
+  );
+}
