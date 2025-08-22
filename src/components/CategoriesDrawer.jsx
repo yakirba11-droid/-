@@ -1,92 +1,104 @@
 import { useState, useEffect } from "react";
 
-/**
- * רכיב מגירת קטגוריות (ימין, RTL)
- * props:
- *  - current: string | null   // הקטגוריה הנבחרת כרגע
- *  - onSelect: (category: string) => void // קריאה חזרה לסינון המלאי
- */
-export default function CategoriesDrawer({ current = null, onSelect = () => {} }) {
+/** מגירת קטגוריות סטטית – לא תלויה בשום מקור נתונים */
+export default function StaticCategoriesDrawer({ onSelect = () => {} }) {
   const [open, setOpen] = useState(false);
 
-  // סוגרים את המגירה עם ESC
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && setOpen(false);
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // כל הקטגוריות – עם אייקון וסוג פעולה (filter/link)
-  const categories = [
-    { id: "ev",        title: "חשמלי",       icon: "⚡",   type: "filter", value: "חשמלי" },
-    { id: "petrol",    title: "בנזין/דיזל",  icon: "⛽",   type: "filter", value: "בנזין/דיזל" },
-    { id: "hybrid",    title: "היברידי",     icon: "♻️",   type: "filter", value: "היברידי" },
-    { id: "luxury",    title: "יוקרה",       icon: "⭐",   type: "filter", value: "יוקרה" },
-    { id: "commercial",title: "מסחרי",       icon: "🚚",   type: "filter", value: "מסחרי" },
-    { id: "contact",   title: "צור קשר",      icon: "☎️",   type: "link",   href: "#contact" },
-    { id: "club",      title: "מועדון לקוחות R&M", icon: "🎯", type: "link", href: "#club" },
+  const items = [
+    { id: "ev",        label: "חשמלי",          icon: "⚡",   type: "filter", value: "חשמלי" },
+    { id: "petrol",    label: "בנזין/דיזל",     icon: "⛽",   type: "filter", value: "בנזין/דיזל" },
+    { id: "hybrid",    label: "היברידי",        icon: "♻️",   type: "filter", value: "היברידי" },
+    { id: "luxury",    label: "יוקרה",          icon: "⭐",   type: "filter", value: "יוקרה" },
+    { id: "commercial",label: "מסחרי",          icon: "🚚",   type: "filter", value: "מסחרי" },
+    { id: "contact",   label: "צור קשר",        icon: "☎️",   type: "link",   href: "#contact" },
+    { id: "club",      label: "מועדון לקוחות R&M", icon: "🎯", type: "link", href: "#club" },
   ];
 
-  const handleItemClick = (item) => {
-    if (item.type === "filter") {
-      onSelect(item.value);     // מסננים לפי הקטגוריה
-      setOpen(false);
-      // אם יש עוגן של רשת המלאי – גוללים אליו קלות
-      const inv = document.querySelector("#inventory");
-      if (inv) inv.scrollIntoView({ behavior: "smooth", block: "start" });
-    } else if (item.type === "link" && item.href) {
-      setOpen(false);
-      // ניווט לעוגן בדף
-      const el = document.querySelector(item.href);
+  const handleClick = (it) => {
+    if (it.type === "filter") onSelect(it.value);
+    if (it.type === "link" && it.href) {
+      const el = document.querySelector(it.href);
       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-      else window.location.hash = item.href;
+      else window.location.hash = it.href;
     }
+    setOpen(false);
   };
 
   return (
     <>
-      {/* כפתור פתיחת מגירה */}
+      {/* כפתור פתיחה קבוע למעלה-ימין */}
       <button
         dir="rtl"
         onClick={() => setOpen(true)}
-        style={styles.trigger}
-        aria-haspopup="dialog"
-        aria-expanded={open ? "true" : "false"}
+        style={{
+          position: "fixed", top: 14, right: 14, zIndex: 1000,
+          background: "#ffffff", color: "#111827",
+          border: "1px solid #e5e7eb", borderRadius: 999,
+          padding: "10px 16px", fontSize: 16,
+          boxShadow: "0 6px 18px rgba(0,0,0,.08)"
+        }}
       >
-        <span style={styles.burger}>≡</span> קטגוריות
+        <span style={{ fontWeight: 700, marginInlineStart: 6 }}>≡</span>
+        קטגוריות
       </button>
 
-      {/* שכבת רקע + המגירה */}
+      {/* שכבה ומגירה */}
       {open && (
-        <div dir="rtl" style={styles.overlay} onClick={() => setOpen(false)}>
+        <div
+          onClick={() => setOpen(false)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 999,
+            background: "rgba(0,0,0,.35)", display: "flex",
+            justifyContent: "flex-end"
+          }}
+        >
           <aside
-            role="dialog"
-            aria-label="קטגוריות"
+            dir="rtl"
             onClick={(e) => e.stopPropagation()}
-            style={styles.drawer}
+            style={{
+              width: "85vw", maxWidth: 380, height: "100%",
+              background: "#ffffff", color: "#111827",
+              boxShadow: "-8px 0 24px rgba(0,0,0,.15)",
+              display: "flex", flexDirection: "column"
+            }}
           >
-            <header style={styles.header}>
-              <strong>קטגוריות</strong>
-              <button onClick={() => setOpen(false)} style={styles.closeBtn} aria-label="סגור">×</button>
-            </header>
+            <div style={{
+              padding: "18px 16px", borderBottom: "1px solid #f1f5f9",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              fontSize: 18, fontWeight: 700
+            }}>
+              קטגוריות
+              <button
+                onClick={() => setOpen(false)}
+                style={{ background: "transparent", border: "none", fontSize: 26, lineHeight: 1, cursor: "pointer" }}
+                aria-label="סגור"
+              >
+                ×
+              </button>
+            </div>
 
-            <nav style={styles.list}>
-              {categories.map((cat) => {
-                const active = current && cat.value === current;
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => handleItemClick(cat)}
-                    style={{
-                      ...styles.item,
-                      ...(active ? styles.itemActive : {}),
-                    }}
-                  >
-                    <span style={styles.icon}>{cat.icon}</span>
-                    <span>{cat.title}</span>
-                  </button>
-                );
-              })}
+            {/* הרשימה – תמיד קיימת, בלי תנאים */}
+            <nav style={{ padding: 12, display: "grid", gap: 10 }}>
+              {items.map((it) => (
+                <button
+                  key={it.id}
+                  onClick={() => handleClick(it)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 10,
+                    padding: "12px 14px", background: "#fff", color: "#111827",
+                    border: "1px solid #e5e7eb", borderRadius: 12, textAlign: "right"
+                  }}
+                >
+                  <span style={{ fontSize: 18, marginInlineStart: 6 }}>{it.icon}</span>
+                  <span style={{ fontSize: 16 }}>{it.label}</span>
+                </button>
+              ))}
             </nav>
           </aside>
         </div>
@@ -94,71 +106,3 @@ export default function CategoriesDrawer({ current = null, onSelect = () => {} }
     </>
   );
 }
-
-/* ===== CSS-in-JS מינימלי, RTL ===== */
-const styles = {
-  trigger: {
-    position: "fixed",
-    top: 14,
-    right: 14,
-    zIndex: 60,
-    background: "#fff",
-    border: "1px solid #e5e7eb",
-    borderRadius: 999,
-    padding: "10px 16px",
-    fontSize: 16,
-    boxShadow: "0 6px 18px rgba(0,0,0,.08)",
-  },
-  burger: { marginInlineStart: 6, fontWeight: 700, fontSize: 18 },
-  overlay: {
-    position: "fixed",
-    inset: 0,
-    background: "rgba(0,0,0,.35)",
-    zIndex: 50,
-    display: "flex",
-    justifyContent: "flex-end",
-  },
-  drawer: {
-    width: "85vw",
-    maxWidth: 380,
-    height: "100%",
-    background: "#fff",
-    boxShadow: "-8px 0 24px rgba(0,0,0,.15)",
-    display: "flex",
-    flexDirection: "column",
-    animation: "slideIn .2s ease-out",
-  },
-  header: {
-    padding: "18px 16px",
-    borderBottom: "1px solid #f1f5f9",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    fontSize: 18,
-  },
-  closeBtn: {
-    background: "transparent",
-    border: "none",
-    fontSize: 26,
-    lineHeight: 1,
-    cursor: "pointer",
-  },
-  list: { padding: 12, display: "grid", gap: 8 },
-  item: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    padding: "12px 14px",
-    borderRadius: 12,
-    border: "1px solid #e5e7eb",
-    background: "#fff",
-    cursor: "pointer",
-    textAlign: "right",
-  },
-  itemActive: {
-    borderColor: "#111827",
-    background: "#111827",
-    color: "#fff",
-  },
-  icon: { fontSize: 18, marginInlineStart: 6 },
-};
