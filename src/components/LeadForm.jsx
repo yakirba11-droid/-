@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 
-export default function LeadForm({ defaultMsg = "" }) {
+export default function LeadForm({ defaultMsg = "", whatsappNumber = "9725XXXXXXXX" }) {
   const [name, setName] = useState("")
   const [phone, setPhone] = useState("")
   const [msg, setMsg] = useState(defaultMsg)
@@ -8,7 +8,7 @@ export default function LeadForm({ defaultMsg = "" }) {
   const submit = (e) => {
     e.preventDefault()
     const text = encodeURIComponent(`שם: ${name}\nטלפון: ${phone}\nהודעה: ${msg}`)
-    const wa = `https://wa.me/972526406728?text=${text}` // <- החלף למספר שלך אם צריך
+    const wa = `https://wa.me/${whatsappNumber}?text=${text}`
     window.open(wa, "_blank")
   }
 
