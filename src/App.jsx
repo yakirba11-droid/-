@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "./styles.css";
 
-/* ===== הגדרות ===== */
-const APR_DEFAULT = 5.9;               // פנימי בלבד לחישוב, לא מוצג
-const LISTING_MONTHS = 60;             // לדפי דגמים / "החל מ..."
-const LISTING_BALLOON_PCT = 0.60;      // פנימי בלבד, לא מוצג
-const WA = "9725XXXXXXXX";             // ← החלף למספר ווטסאפ שלך (ללא '+')
+/* ===== הגדרות כלליות ===== */
+const APR_DEFAULT = 5.9;                // פנימי בלבד לחישוב, לא מוצג
+const LISTING_MONTHS = 60;              // ל"החל מ..."
+const LISTING_BALLOON_PCT = 0.60;       // פנימי בלבד, לא מוצג
+const WA = "9725XXXXXXXX";              // ← החלף למספר ווצאפ (ללא '+')
 
 /* ===== עזרים ===== */
 const fmt = (n) =>
@@ -18,10 +18,7 @@ const slugify = (s = "") =>
     .replace(/[^\p{L}\p{N}]+/gu, "-")
     .replace(/-+/g, "-").replace(/^-|-$/g, "");
 
-/** תשלום חודשי.
- * plan: "standard" | "balloon"
- * balloonAmount: סכום בלון בש"ח (לא אחוזים)
- */
+/** חישוב החזר חודשי */
 function monthlyPayment({ price, down = 0, months = 60, plan = "standard", balloonAmount = 0 }) {
   const r = APR_DEFAULT / 100 / 12;
   const P0 = Math.max(0, Number(price || 0) - Number(down || 0));
@@ -125,18 +122,18 @@ function Sidebar({ countsByCat, activeCat, setActiveCat, brands, activeBrand, se
   );
 }
 
-/* ===== מגירת קטגוריות למובייל ===== */
+/* ===== מגירת קטגוריות למובייל – פתיחה/סגירה מתוקנת ===== */
 function MobileSide({ open, onClose, ...props }) {
   return (
     <>
-      <div className={`drawer ${open ? "open" : ""}`}>
+      <div className={`drawer ${open ? "open" : ""}`} role="dialog" aria-modal="true">
         <div className="drawer-head">
           <b>קטגוריות</b>
-          <button className="icon" onClick={onClose}>✕</button>
+          <button className="icon" onClick={onClose} aria-label="סגור קטגוריות">✕</button>
         </div>
         <Sidebar {...props} />
       </div>
-      {open && <div className="backdrop" onClick={onClose} />}
+      {open && <div className="backdrop" onClick={onClose} aria-label="סגור" />}
     </>
   );
 }
@@ -150,7 +147,7 @@ function HomeFinance() {
   const [balloonAmount, setBalloonAmount] = useState(0);
 
   const maxMonths = plan === "standard" ? 100 : 60;
-  const maxBalloon = Math.round(price * 0.60); // עד 60% — לא מוצג למשתמש
+  const maxBalloon = Math.round(price * 0.60); // עד 60% — לא מוצג
 
   useEffect(() => {
     if (plan === "standard") setBalloonAmount(0);
@@ -158,9 +155,7 @@ function HomeFinance() {
     setBalloonAmount((prev) => Math.min(prev, maxBalloon));
   }, [plan, price, months]);
 
-  const m = Math.round(
-    monthlyPayment({ price, down, months, plan, balloonAmount })
-  );
+  const m = Math.round(monthlyPayment({ price, down, months, plan, balloonAmount }));
 
   return (
     <div className="card finance">
@@ -209,7 +204,7 @@ function HomeFinance() {
   );
 }
 
-/* ===== טופס אונליין מלא (כולל מס׳ רישוי) ===== */
+/* ===== טופס אונליין בסיסי (ליד מיידי) ===== */
 function OnlineForm() {
   const [state, setState] = useState({
     fullName: "", phone: "", email: "", city: "",
@@ -260,7 +255,63 @@ function OnlineForm() {
   );
 }
 
-/* ===== צ׳אט התאמה – כרטיס במרכז הדף ===== */
+/* ===== עמוד טרייד-אין נפרד ===== */
+function TradeInPage({ onBack }) {
+  const [s, setS] = useState({
+    fullName: "", phone: "", email: "",
+    brand: "", model: "", year: "", km: "",
+    license: "", condition: "מצב טוב", notes: "",
+  });
+  const set = (k, v) => setS((x) => ({ ...x, [k]: v }));
+
+  const msg =
+`טופס טרייד-אין – R&M:
+שם: ${s.fullName}
+טלפון: ${s.phone}
+אימייל: ${s.email}
+מותג/דגם: ${s.brand} ${s.model}
+שנה: ${s.year} | ק״מ: ${s.km}
+מס׳ רישוי: ${s.license}
+מצב רכב: ${s.condition}
+הערות: ${s.notes}`.trim();
+
+  return (
+    <div className="card">
+      <button className="btn" onClick={onBack}>↩︎ חזרה</button>
+      <div className="title" style={{marginTop:8}}>טרייד־אין אונליין</div>
+      <div className="grid2">
+        <div className="form">
+          <label>שם מלא<input value={s.fullName} onChange={(e)=>set("fullName", e.target.value)} /></label>
+          <label>טלפון<input inputMode="tel" value={s.phone} onChange={(e)=>set("phone", e.target.value)} /></label>
+          <label>אימייל<input type="email" value={s.email} onChange={(e)=>set("email", e.target.value)} /></label>
+          <label>מותג<input value={s.brand} onChange={(e)=>set("brand", e.target.value)} /></label>
+          <label>דגם<input value={s.model} onChange={(e)=>set("model", e.target.value)} /></label>
+          <label>שנת ייצור<input inputMode="numeric" value={s.year} onChange={(e)=>set("year", e.target.value)} /></label>
+          <label>ק״מ<input inputMode="numeric" value={s.km} onChange={(e)=>set("km", e.target.value)} /></label>
+          <label>מס׳ רישוי<input inputMode="numeric" value={s.license} onChange={(e)=>set("license", e.target.value)} /></label>
+          <label>מצב רכב
+            <select value={s.condition} onChange={(e)=>set("condition", e.target.value)}>
+              <option>מצב מצוין</option>
+              <option>מצב טוב</option>
+              <option>מצב סביר</option>
+              <option>צריך טיפול</option>
+            </select>
+          </label>
+          <label>הערות<textarea rows="4" value={s.notes} onChange={(e)=>set("notes", e.target.value)} /></label>
+        </div>
+        <div className="notes">
+          <p>לאחר מילוי הטופס נבצע הערכת שווי מהירה ונחזור אליך עם הצעת עסקה.</p>
+          <a className="btn primary mt16" target="_blank" rel="noreferrer"
+             href={`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`}>
+            שלח את פרטי הטרייד־אין בווטסאפ
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ===== "מאתר רכב חכם" (שם חדש לצ׳אט) ===== */
 function MatchChatInline({ cars }) {
   const [step, setStep] = useState(1);
   const [budget, setBudget] = useState(160000);
@@ -285,7 +336,6 @@ function MatchChatInline({ cars }) {
         if (style === "לא משנה") score += 10;
         else if (st === style || (style === "יוקרה" && c.category === "יוקרה")) score += 10;
 
-        // "החל מ" לפי בלון 60 ח׳, בלון 60% — לא מוצג למשתמש
         const per = Math.round(
           monthlyPayment({
             price: c.price,
@@ -305,14 +355,14 @@ function MatchChatInline({ cars }) {
 
   return (
     <div className="card chat-inline">
-      <div className="title">צ׳אט התאמה</div>
+      <div className="title">מאתר רכב חכם</div>
 
       {step === 1 && (
         <div className="chat-body">
           <div className="q">מה התקציב המשוער לרכב?</div>
           <input type="range" min="70000" max="450000" step="5000" value={budget} onChange={(e)=>setBudget(+e.target.value)} />
           <div className="hint">תקציב: <b>{fmt(budget)}</b></div>
-          <div className="chat-actions"><button className="btn primary" onClick={()=>setStep(2)}>הבא</button></div>
+          <div className="chat-actions"><button className="btn primary" onClick={()=>setStep(2)}>המשך</button></div>
         </div>
       )}
 
@@ -326,7 +376,7 @@ function MatchChatInline({ cars }) {
           </div>
           <div className="chat-actions">
             <button className="btn" onClick={()=>setStep(1)}>חזרה</button>
-            <button className="btn primary" onClick={()=>setStep(3)}>הבא</button>
+            <button className="btn primary" onClick={()=>setStep(3)}>המשך</button>
           </div>
         </div>
       )}
@@ -343,14 +393,14 @@ function MatchChatInline({ cars }) {
           <input type="number" placeholder="₪ חודשי יעד" value={maxMonthly||""} onChange={(e)=>setMaxMonthly(e.target.value?+e.target.value:0)} />
           <div className="chat-actions">
             <button className="btn" onClick={()=>setStep(2)}>חזרה</button>
-            <button className="btn primary" onClick={()=>setStep(4)}>קבל התאמות</button>
+            <button className="btn primary" onClick={()=>setStep(4)}>מצא לי</button>
           </div>
         </div>
       )}
 
       {step === 4 && (
         <div className="chat-body">
-          <div className="q">ההתאמות המובילות עבורך</div>
+          <div className="q">התאמות מובילות עבורך</div>
           <div className="rec-list">
             {scored.map(({ car, per }, i)=>(
               <div key={car.id} className="rec">
@@ -366,7 +416,7 @@ function MatchChatInline({ cars }) {
                 </a>
               </div>
             ))}
-            {scored.length===0 && <div className="muted">אין התאמות כרגע — נסו לשנות פרמטרים.</div>}
+            {scored.length===0 && <div className="muted">אין התאמות — נסו לשנות פרמטרים.</div>}
           </div>
           <div className="chat-actions">
             <button className="btn" onClick={()=>setStep(1)}>התחל מחדש</button>
@@ -377,7 +427,7 @@ function MatchChatInline({ cars }) {
   );
 }
 
-/* ===== כרטיס דגם לרשימה ===== */
+/* ===== כרטיס דגם ===== */
 function CarCard({ car, onOpen }) {
   const perBalloon = Math.round(
     monthlyPayment({
@@ -427,7 +477,7 @@ function ModelPage({ car, onBack }) {
   );
 }
 
-/* ===== קאטלוג (נפתח רק מהצד) ===== */
+/* ===== קאטלוג ===== */
 function Catalog({ cars, activeCat, setActiveCat, activeBrand, setActiveBrand, onOpenCar }) {
   const brands = useMemo(() => {
     const s = new Set(cars.filter(c => c.category === activeCat).map(c => c.brand));
@@ -466,11 +516,9 @@ export default function App() {
   const [activeBrand, setActiveBrand] = useState(null);
   const [activeCar, setActiveCar] = useState(null);
   const [drawer, setDrawer] = useState(false);
+  const [route, setRoute] = useState("home"); // "home" | "tradein"
 
-  // קריאה ל-inventory.csv מה-public
-  useEffect(() => {
-    parseCSV("/inventory.csv").then(setCars).catch(() => setCars([]));
-  }, []);
+  useEffect(() => { parseCSV("/inventory.csv").then(setCars).catch(()=>setCars([])); }, []);
 
   const countsByCat = useMemo(() => {
     const m = { חשמלי: 0, היברידי: 0, בנזין: 0, יוקרה: 0 };
@@ -487,11 +535,16 @@ export default function App() {
     <div className="wrap">
       {/* Header */}
       <header className="hdr">
+        <button
+          className="btn ghost"
+          onClick={()=>setDrawer(true)}
+          aria-label="פתח קטגוריות">
+          ☰ קטגוריות
+        </button>
         <a className="btn ghost" target="_blank" rel="noreferrer"
            href={`https://wa.me/${WA}?text=${encodeURIComponent("היי, מעוניין ברכב חדש 0 ק\"מ.")}`}>
           ווטסאפ
         </a>
-        <button className="btn ghost" onClick={()=>setDrawer(true)}>קטגוריות ☰</button>
         <div className="brand">R&M מוטורס — חדש 0 ק״מ</div>
         <div className="muted sm">שירות פרימיום · מחירים מיוחדים · ליווי מלא</div>
       </header>
@@ -502,10 +555,10 @@ export default function App() {
         onClose={()=>setDrawer(false)}
         countsByCat={countsByCat}
         activeCat={activeCat}
-        setActiveCat={(c)=>{ setActiveCat(c); setActiveBrand(null); setDrawer(false); }}
+        setActiveCat={(c)=>{ setActiveCat(c); setActiveBrand(null); setRoute("home"); setDrawer(false); }}
         brands={brandsInCat}
         activeBrand={activeBrand}
-        setActiveBrand={(b)=>{ setActiveBrand(b); setDrawer(false); }}
+        setActiveBrand={(b)=>{ setActiveBrand(b); setRoute("home"); setDrawer(false); }}
       />
 
       <main className="main">
@@ -513,20 +566,19 @@ export default function App() {
         <Sidebar
           countsByCat={countsByCat}
           activeCat={activeCat}
-          setActiveCat={(c)=>{ setActiveCat(c); setActiveBrand(null); }}
+          setActiveCat={(c)=>{ setActiveCat(c); setActiveBrand(null); setRoute("home"); }}
           brands={brandsInCat}
           activeBrand={activeBrand}
           setActiveBrand={setActiveBrand}
         />
 
         <section className="content">
-          {/* מצב דף פירוט דגם */}
-          {activeCar && (
+          {/* ניווט פשוט */}
+          {route === "tradein" ? (
+            <TradeInPage onBack={()=>setRoute("home")} />
+          ) : activeCar ? (
             <ModelPage car={activeCar} onBack={()=>setActiveCar(null)} />
-          )}
-
-          {/* אם יש קטגוריה נבחרת – מציגים קאטלוג; אחרת – דף הבית הנקי */}
-          {!activeCar && activeCat && (
+          ) : activeCat ? (
             <Catalog
               cars={cars}
               activeCat={activeCat}
@@ -535,26 +587,23 @@ export default function App() {
               setActiveBrand={setActiveBrand}
               onOpenCar={setActiveCar}
             />
-          )}
-
-          {!activeCar && !activeCat && (
+          ) : (
             <>
               <div className="hero card">
                 <span className="badge">חדש 0 ק״מ בלבד</span>
-                <h1>רק מה שחשוב: מימון, טרייד-אין וצ׳אט התאמה.</h1>
+                <h1>רק מה שחשוב: מימון, טרייד־אין ו<strong>מאתר רכב חכם</strong>.</h1>
                 <p className="muted">את הרכבים תבחרו דרך הקטגוריות בצד — מסודר ונקי.</p>
+                <div className="hero-actions">
+                  <button className="btn" onClick={()=>setRoute("tradein")}>פתח טופס טרייד־אין</button>
+                </div>
               </div>
               <HomeFinance />
               <MatchChatInline cars={cars} />
               <OnlineForm />
-              {/* כרטיס טרייד-אין קצר עם קישור */}
               <div className="card">
-                <div className="title">טרייד-אין אונליין</div>
-                <p>הערכת שווי מהירה מרחוק, אפשרות לקיזוז בעסקה חדשה, שירות איסוף ואספקה.</p>
-                <a className="btn" target="_blank" rel="noreferrer"
-                   href={`https://wa.me/${WA}?text=${encodeURIComponent("שלום, רוצה לבצע הערכת טרייד-אין אונליין.")}`}>
-                  התחלת טרייד-אין בווטסאפ
-                </a>
+                <div className="title">טרייד־אין אונליין</div>
+                <p>הערכת שווי מהירה מרחוק וקיזוז בעסקה חדשה. לחץ למילוי טופס מסודר.</p>
+                <button className="btn" onClick={()=>setRoute("tradein")}>למילוי טופס טרייד־אין</button>
               </div>
             </>
           )}
