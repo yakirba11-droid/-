@@ -5,7 +5,7 @@ import "./styles.css";
 const APR_DEFAULT = 5.9;               // פנימי בלבד לחישוב, לא מוצג
 const LISTING_MONTHS = 60;             // לדפי דגמים / "החל מ..."
 const LISTING_BALLOON_PCT = 0.60;      // פנימי בלבד, לא מוצג
-const WA = "972526406728";             // ← החלף למספר ווטסאפ שלך (ללא '+')
+const WA = "9725XXXXXXXX";             // ← החלף למספר ווטסאפ שלך (ללא '+')
 
 /* ===== עזרים ===== */
 const fmt = (n) =>
