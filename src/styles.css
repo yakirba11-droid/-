@@ -1,0 +1,108 @@
+:root{
+  --bg:#f6f6f6; --card:#fff; --ink:#141414; --muted:#6b6b6b;
+  --line:#e9e9e9; --brand:#000; --pill:#0f0f0f; --accent:#E7DFCF;
+  --radius:20px; --radius-lg:28px;
+  --shadow:0 10px 24px rgba(0,0,0,.06);
+  --grad: linear-gradient(90deg,#fff 0%, #E7DFCF 100%);
+}
+*{box-sizing:border-box}
+html,body,#root{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Heebo","Assistant",Segoe UI,Roboto,Ubuntu;direction:rtl}
+a{color:inherit;text-decoration:none}
+
+.container{max-width:1180px;margin:0 auto;padding:0 16px}
+.row{display:flex} .sb{justify-content:space-between} .a-center{align-items:center}
+.g8{gap:8px} .g16{gap:16px} .mt8{margin-top:8px} .mt16{margin-top:16px}
+.grid2{display:grid;grid-template-columns:1fr;gap:24px}
+.grid3{display:grid;grid-template-columns:1fr;gap:24px}
+.grid4{display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:860px){.grid2{grid-template-columns:1.1fr .9fr}.grid3{grid-template-columns:1fr 1fr 1fr}.grid4{grid-template-columns:repeat(4,1fr)}}
+.gap16{gap:16px} .gap24{gap:24px} .gap32{gap:32px}
+.wrap{flex-wrap:wrap}
+.flex1{flex:1}
+
+.btn{border-radius:999px;padding:10px 16px;border:1px solid var(--line);background:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.btn.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+.btn.white{background:#fff;color:var(--ink)}
+.btn.outline{background:transparent;border-color:var(--ink)}
+.btn.sm{padding:6px 10px;font-size:13px}
+
+.header{position:sticky;top:0;background:#fff/80;background:#fff;backdrop-filter:saturate(140%) blur(6px);border-bottom:1px solid var(--line);z-index:40}
+.logo{height:36px}
+.brand{font-weight:800}
+.sub{color:var(--muted);font-size:13px}
+
+.hero{background:#0b0b0b;color:#fff;padding:40px 0 30px;border-bottom:1px solid #111}
+.hero .grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero h1{font-size:36px;line-height:1.15;margin:8px 0 4px}
+.hero .muted{color:#ffffffcc}
+.hero .chip{display:inline-flex;align-items:center;gap:8px;border:1px solid #ffffff33;background:#ffffff18;padding:6px 12px;border-radius:999px;font-size:12px}
+.bullets{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:16px 0}
+.bullet{display:flex;align-items:center;gap:8px;border:1px solid #ffffff33;background:#ffffff18;padding:10px;border-radius:16px;font-size:13px}
+.hero-visual img{width:100%;max-width:420px;filter:drop-shadow(0 24px 40px rgba(255,255,255,.15))}
+
+.fine{font-size:11px;color:#888;margin-top:8px}
+
+.tabs{background:#fff;border-bottom:1px solid var(--line)}
+.tab{border:1px solid var(--line);background:#f7f7f7;border-radius:999px;padding:8px 14px}
+.tab.active{background:#000;border-color:#000;color:#fff}
+.count{font-size:12px;opacity:.8}
+
+.filters{background:#fff;border-bottom:1px solid var(--line)}
+.filter-grid{display:grid;grid-template-columns:1fr 160px 160px 180px;gap:12px}
+@media(max-width:860px){.filter-grid{grid-template-columns:1fr 1fr;}}
+.search input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:12px}
+select{padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.card-mini{border:1px solid var(--line);background:#fff;border-radius:16px;padding:12px}
+.card-mini .label{font-size:13px;color:var(--muted)}
+.card-mini .hint{font-size:12px;color:var(--muted);margin-top:4px}
+.card-mini .sm{border-radius:999px;padding:6px 10px;border:1px solid var(--line);background:#fff}
+.card-mini .sm.active{background:#000;color:#fff;border-color:#000}
+
+.grid-wrap{padding:20px 0}
+
+.car-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow);position:relative}
+.car-image-wrap{background:#fff;display:flex;align-items:center;justify-content:center;height:230px}
+.car-image-wrap img{max-height:100%;max-width:100%;object-fit:contain}
+.ribbons{position:absolute;inset:12px auto auto 12px;display:flex;gap:8px}
+.ribbon{padding:6px 10px;border-radius:999px;font-size:12px}
+.ribbon.dark{background:#000;color:#fff}
+.ribbon.light{background:#ffffffee;color:#111;border:1px solid var(--line)}
+
+.card-body{padding:14px}
+.title-row{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.car-title{font-size:18px;font-weight:800;margin:0}
+.price{text-align:left}
+.msrp{text-decoration:line-through;color:#888;font-size:12px}
+.now{font-weight:900}
+.per{font-size:11px;color:#666}
+
+.meta{display:flex;gap:10px;color:#666;font-size:13px;margin-top:6px}
+.meta span{display:inline-flex;align-items:center;gap:6px}
+
+.features{margin:10px 0 0 0;padding:0 16px;list-style:disc;color:#333;font-size:14px}
+.features li{margin:4px 0}
+
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);padding:16px;box-shadow:var(--shadow)}
+.card .title{font-size:22px;font-weight:900;margin-bottom:12px}
+.finance .plans{display:flex;gap:8px}
+.finance .plans button{border:1px solid var(--line);border-radius:999px;padding:8px 12px;background:#fff}
+.finance .plans .active{background:#000;color:#fff;border-color:#000}
+.finance .grid2{display:grid;grid-template-columns:1fr;gap:18px}
+@media(min-width:860px){.finance .grid2{grid-template-columns:1fr 1fr}}
+.finance .form label{display:block;font-size:14px;color:#444;margin-bottom:12px}
+.finance .form input[type="number"]{width:100%;padding:10px;border:1px solid var(--line);border-radius:12px;margin-top:6px}
+.finance .form input[type="range"]{width:100%}
+.finance .form .hint{font-size:12px;color:#666;margin-top:4px}
+.finance .summary{border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:10px;background:#fafafa}
+.finance .summary div{display:flex;justify-content:space-between;margin:6px 0}
+.finance .notes{margin:0;padding:0 16px;list-style:disc;color:#444}
+
+.steps .title,.faq .title{font-size:22px;font-weight:900;margin:20px 0 10px}
+.step{border:1px solid var(--line);background:#fff;border-radius:16px;padding:14px}
+.muted{color:var(--muted)}
+
+.faq details{border:1px solid var(--line);background:#fff;border-radius:16px;padding:12px;margin:10px 0}
+.faq summary{cursor:pointer;font-weight:700}
+
+.footer{margin-top:30px;border-top:1px solid var(--line);background:#fff;padding:18px 0}
