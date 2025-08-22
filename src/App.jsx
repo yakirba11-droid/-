@@ -5,24 +5,30 @@ import LeadForm from './components/LeadForm.jsx'
 import Info from './components/Info.jsx'
 import StickyBar from './components/StickyBar.jsx'
 
-// ------- קונפיג מימון לתצוגת "החל מ-₪ לחודש" -------
-const APR_DEFAULT = 4.7   // ריבית משוערת שנתית
-const MONTHS_DEFAULT = 84 // ברירת מחדל ל-7 שנים
-const DOWN_DEFAULT = 0
+// ----- חישובי מימון (פנימי בלבד, לא מוצג) -----
+const APR_DEFAULT = 5.9;   // צמוד מדד (לא מוצג)
+const MONTHS_DEFAULT = 60; // ברירת מחדל 60ח'
+const BALLOON_FRAC = 0.5;  // 50% בלון סוף תקופה
 
-const fmt = (n) => isFinite(n)
-  ? n.toLocaleString('he-IL', { style: 'currency', currency: 'ILS', maximumFractionDigits: 0 })
-  : '—'
+function monthlyPayment({ price, down = 0, months = MONTHS_DEFAULT, plan = 'standard', apr = APR_DEFAULT }) {
+  const P0 = Math.max(0, Number(price || 0) - Number(down || 0));
+  const r = (apr / 100) / 12;
+  if (months <= 0) return 0;
 
-const monthlyFrom = (price, months=MONTHS_DEFAULT, apr=APR_DEFAULT, down=DOWN_DEFAULT) => {
-  const P = Math.max(0, Number(price||0) - down)
-  const r = (apr / 100) / 12
-  if (!P || !months) return 0
-  if (r === 0) return P / months
-  return (P * r) / (1 - Math.pow(1 + r, -months))
+  if (plan === 'balloon') {
+    // בלון: 60 תשלומים ובלון 50% בסוף
+    const F = BALLOON_FRAC * Number(price || 0);
+    if (r === 0) return (P0 - F) / months;
+    const den = 1 - Math.pow(1 + r, -months);
+    return (r * (P0 - F / Math.pow(1 + r, months))) / den;
+  } else {
+    // רגיל (שפיצר)
+    if (r === 0) return P0 / months;
+    return (P0 * r) / (1 - Math.pow(1 + r, -months));
+  }
 }
 
-// ------- טעינת מלאי מ-CSV עם עקיפת קאש -------
+// CSV loader עם עקיפת קאש
 const parseCSV = async (url) => {
   const full = `${url}${url.includes('?') ? '&' : '?'}v=${Date.now()}`
   const res = await fetch(full, { cache: 'no-store' })
@@ -37,10 +43,12 @@ const parseCSV = async (url) => {
     obj.km = Number(obj.km); obj.delivery_weeks = obj.delivery_weeks ? Number(obj.delivery_weeks) : null
     obj.highlights = (obj.highlights || '').split('|').filter(Boolean)
     obj.sold = (obj.sold || '').toLowerCase() === 'yes'
-    obj.brand = (obj.title || '').split(' ')[0] // מותג מהטייטל
+    obj.brand = (obj.title || '').split(' ')[0]
     return obj
   })
 }
+
+const fmt = (n) => isFinite(n) ? n.toLocaleString('he-IL', { style: 'currency', currency: 'ILS', maximumFractionDigits: 0 }) : '—'
 
 export default function App() {
   useEffect(() => {
@@ -48,15 +56,18 @@ export default function App() {
     document.title = 'R&M מוטורס — חדש 0 ק״מ'
   }, [])
 
-  const whatsappNumber = '9725XXXXXXXX' // ← להחליף למספר שלך
+  const whatsappNumber = '972547118126' // ← החלף למספר שלך (ללא + ובלי 0 בתחילת המס')
   const [cars, setCars] = useState([])
   const [query, setQuery] = useState('')
   const [fuel, setFuel] = useState('הכל')
   const [sort, setSort] = useState('newest')
+  const [brand, setBrand] = useState('הכל')
   const [maxPrice, setMaxPrice] = useState(0)
   const [maxMonthly, setMaxMonthly] = useState(0)
-  const [brand, setBrand] = useState('הכל')
-  const [openId, setOpenId] = useState(null)
+
+  // מסלולים
+  const [plan, setPlan] = useState('standard') // 'standard' | 'balloon'
+  const [months, setMonths] = useState(60)     // רגיל בלבד; בלון = 60 קבוע
 
   useEffect(() => {
     parseCSV('/inventory.csv').then(setCars).catch(() => {
@@ -70,32 +81,37 @@ export default function App() {
   const maxObservedPrice = useMemo(() => (cars.length ? Math.max(...cars.map(c => c.price || 0)) : 0), [cars])
   const maxObservedMonthly = useMemo(() => {
     if (!cars.length) return 0
-    return Math.ceil(Math.max(...cars.map(c => monthlyFrom(c.price))) / 10) * 10
-  }, [cars])
+    return Math.ceil(Math.max(...cars.map(c => monthlyPayment({ price: c.price, months: plan==='balloon'?60:months, plan }))) / 10) * 10
+  }, [cars, plan, months])
 
   const filtered = useMemo(() => {
     let items = cars
-      .filter(c => (c.km ?? 0) <= 15 && !c.sold)
+      .filter(c => (c.km ?? 0) <= 15 && !c.sold) // 0 ק״מ בלבד
       .filter(c => (query ? `${c.title} ${c.fuel||''}`.toLowerCase().includes(query.toLowerCase()) : true))
       .filter(c => (fuel === 'הכל' ? true : c.fuel === fuel))
       .filter(c => (brand === 'הכל' ? true : c.brand === brand))
       .filter(c => (maxPrice > 0 ? Number(c.price) <= maxPrice : true))
-      .filter(c => (maxMonthly > 0 ? monthlyFrom(c.price) <= maxMonthly : true))
+      .filter(c => {
+        if (maxMonthly <= 0) return true
+        const m = monthlyPayment({ price: c.price, months: plan === 'balloon' ? 60 : months, plan })
+        return m <= maxMonthly
+      })
 
     if (sort === 'newest') items.sort((a,b) => b.year - a.year)
     if (sort === 'price_low') items.sort((a,b) => a.price - b.price)
     if (sort === 'price_high') items.sort((a,b) => b.price - a.price)
     return items
-  }, [cars, query, fuel, brand, sort, maxPrice, maxMonthly])
+  }, [cars, query, fuel, brand, sort, maxPrice, maxMonthly, plan, months])
 
+  const openWhatsApp = (car) => {
+    const text = encodeURIComponent(`שלום, מעוניין ב-${car.title} חדש 0 ק״מ (${car.year}). אשמח להצעת מחיר ומסלול מימון מתאים.`)
+    window.open(`https://wa.me/${whatsappNumber}?text=${text}`, '_blank')
+  }
+
+  const [openId, setOpenId] = useState(null)
   const openCar = (id) => setOpenId(id)
   const closeCar = () => setOpenId(null)
   const opened = filtered.find(c => c.id === openId)
-
-  const handleWhatsApp = (car) => {
-    const text = encodeURIComponent(`שלום, מעוניין ב-${car.title} חדש 0 ק״מ ${car.year}. אשמח להצעת מחיר ומימון.`)
-    window.open(`https://wa.me/${whatsappNumber}?text=${text}`, '_blank')
-  }
 
   return (
     <div className="min-h-screen bg-neutral-50 text-neutral-900">
@@ -113,16 +129,16 @@ export default function App() {
         </div>
       </header>
 
-      {/* HERO — הצעת ערך חזקה כמו באתרים ששלחת */}
+      {/* HERO */}
       <section className="relative overflow-hidden bg-black text-white">
         <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-8 px-4 py-12 md:py-16 items-center">
           <div>
             <h2 className="text-3xl md:text-4xl font-extrabold leading-tight">
-              רק רכבים <span className="bg-gradient-to-l from-white to-[#E7DFCF] bg-clip-text text-transparent">חדשים 0 ק״מ</span> — מחירים מיוחדים ומימון מותאם
+              רק רכבים <span className="bg-gradient-to-l from-white to-brand.cream bg-clip-text text-transparent">חדשים 0 ק״מ</span> — מחירים מיוחדים ומימון מותאם
             </h2>
-            <p className="mt-4 text-white/90">ליווי מלא של כל התהליך, לא חותמים עד שמצאנו את הטוב ביותר ללקוח.</p>
+            <p className="mt-4 text-white/90">ליווי מלא של כל התהליך — לא חותמים עד שמצאנו את הטוב ביותר ללקוח.</p>
             <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-              {['0 ק״מ אמיתי', 'מחירים מיוחדים', 'מימון מותאם', 'ליווי עד ואחרי המסירה'].map(b => (
+              {['0 ק״מ אמיתי','מחירים מיוחדים','מימון מותאם','ליווי עד ואחרי המסירה'].map(b => (
                 <div key={b} className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-2xl p-3">
                   <CheckCircle2 size={16} /> <span>{b}</span>
                 </div>
@@ -132,10 +148,8 @@ export default function App() {
               <a href="#inventory"><button className="rounded-2xl px-6 py-2 bg-white text-black">למלאי</button></a>
               <a href="#finance"><button className="rounded-2xl px-6 py-2 border border-white/50">מחשבוני מימון</button></a>
             </div>
-
-            {/* סטריפ אמון/שיתופי פעולה */}
-            <div className="mt-6 text-xs text-white/80">
-              עובדים עם גופי מימון ובנקים מובילים — הצעות מותאמות במהירות.
+            <div className="mt-4 text-[11px] text-white/80">
+              * תנאי המימון צמודי מדד ועשויים להשתנות לפי דירוג הלקוח.
             </div>
           </div>
           <div className="relative flex items-center justify-center">
@@ -152,7 +166,7 @@ export default function App() {
       {/* סינון + מלאי */}
       <section id="inventory" className="border-t bg-white">
         <div className="max-w-7xl mx-auto px-4 py-6">
-          {/* סרגל עליון: חיפוש/מותג/דלק/מיון */}
+          {/* פס סינון עליון */}
           <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
             <div className="flex-1 flex items-center gap-2">
               <div className="relative w-full md:w-96">
@@ -175,22 +189,37 @@ export default function App() {
             </div>
           </div>
 
-          {/* סליידרים לתקציב */}
-          <div className="mt-3 grid md:grid-cols-2 gap-3">
+          {/* בוררי מסלול/חודשים + סליידרים לתקציב */}
+          <div className="mt-3 grid lg:grid-cols-4 sm:grid-cols-2 grid-cols-1 gap-3">
+            <div className="bg-neutral-50 border rounded-2xl p-3">
+              <label className="text-sm text-neutral-700">מסלול מימון</label>
+              <div className="mt-2 flex items-center gap-2">
+                <button className={`rounded-xl px-3 py-2 border ${plan==='standard' ? 'bg-black text-white' : ''}`} onClick={() => setPlan('standard')} type="button">רגיל</button>
+                <button className={`rounded-xl px-3 py-2 border ${plan==='balloon' ? 'bg-black text-white' : ''}`} onClick={() => setPlan('balloon')} type="button">בלון (50% / 60ח׳)</button>
+              </div>
+            </div>
+
+            <div className="bg-neutral-50 border rounded-2xl p-3">
+              <label className="text-sm text-neutral-700">מס׳ חודשים {plan==='balloon' ? '(קבוע 60)' : ''}</label>
+              <input type="range" min={12} max={96} step={12} disabled={plan==='balloon'} value={months} onChange={e => setMonths(parseInt(e.target.value))} className="w-full mt-2" />
+              <div className="text-xs text-neutral-600 mt-1">{plan==='balloon' ? '60' : months} ח׳</div>
+            </div>
+
             <div className="bg-neutral-50 border rounded-2xl p-3">
               <label className="text-sm text-neutral-700">תקרת מחיר: {maxPrice > 0 ? fmt(maxPrice) : 'ללא'}</label>
-              <input type="range" min={0} max={maxObservedPrice || 300000} step={1000} value={maxPrice} onChange={e => setMaxPrice(parseInt(e.target.value))} className="w-full" />
+              <input type="range" min={0} max={maxObservedPrice || 400000} step={1000} value={maxPrice} onChange={e => setMaxPrice(parseInt(e.target.value))} className="w-full mt-2" />
             </div>
+
             <div className="bg-neutral-50 border rounded-2xl p-3">
               <label className="text-sm text-neutral-700">תקרת תשלום חודשי: {maxMonthly > 0 ? fmt(maxMonthly) : 'ללא'}</label>
-              <input type="range" min={0} max={maxObservedMonthly || 4000} step={50} value={maxMonthly} onChange={e => setMaxMonthly(parseInt(e.target.value))} className="w-full" />
+              <input type="range" min={0} max={maxObservedMonthly || 5000} step={50} value={maxMonthly} onChange={e => setMaxMonthly(parseInt(e.target.value))} className="w-full mt-2" />
             </div>
           </div>
 
           {/* רשת כרטיסים */}
           <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {filtered.map(car => {
-              const month = Math.round(monthlyFrom(car.price))
+              const m = Math.round(monthlyPayment({ price: car.price, months: plan==='balloon'?60:months, plan }))
               return (
                 <div key={car.id} className="rounded-3xl overflow-hidden shadow-sm border hover:shadow-md transition bg-white">
                   <div className="relative">
@@ -204,7 +233,7 @@ export default function App() {
                       <div className="text-right">
                         {car.msrp ? <div className="text-xs line-through text-neutral-500">{fmt(car.msrp)}</div> : null}
                         <div className="text-base font-extrabold">{fmt(car.price)}</div>
-                        <div className="text-[11px] text-neutral-500">החל מ־<b>{fmt(month)}</b> לחודש</div>
+                        <div className="text-[11px] text-neutral-500">החל מ־<b>{fmt(m)}</b> לחודש</div>
                       </div>
                     </div>
                     <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-neutral-600">
@@ -216,8 +245,11 @@ export default function App() {
                       {car.highlights?.map(h => <li key={h}>{h}</li>)}
                     </ul>
                     <div className="mt-4 flex items-center gap-2">
-                      <button className="rounded-2xl px-4 py-2 bg-black text-white flex-1" onClick={() => openCar(car.id)}>בקשת הצעת מחיר</button>
-                      <button className="rounded-2xl px-4 py-2 border" onClick={() => handleWhatsApp(car)}>ווטסאפ</button>
+                      <button className="rounded-2xl px-4 py-2 bg-black text-white flex-1" onClick={() => setOpenId(car.id)}>בקשת הצעת מחיר</button>
+                      <button className="rounded-2xl px-4 py-2 border" onClick={() => openWhatsApp(car)}>ווטסאפ</button>
+                    </div>
+                    <div className="mt-2 text-[11px] text-neutral-500">
+                      * תנאי המימון צמודי מדד ועשויים להשתנות לפי דירוג הלקוח.
                     </div>
                   </div>
                 </div>
@@ -229,13 +261,13 @@ export default function App() {
         </div>
       </section>
 
-      {/* למה אצלנו (Trust) */}
+      {/* למה אצלנו */}
       <section className="max-w-7xl mx-auto px-4 py-10">
         <div className="grid md:grid-cols-3 gap-4">
           {[
             ['השירות הטוב ביותר','זמינות, שקיפות וליווי אישי עד ואחרי המסירה.'],
             ['מחירים מיוחדים מאוד','דילים חזקים על חדש 0 ק״מ בעזרת הספקים שלנו.'],
-            ['מימון מותאם אישית','השוואת מסלולים מ־מספר גופים — לא חותמים עד שמצאנו את הטוב ביותר.'],
+            ['מימון מותאם אישית','מסלולים אישיים — לא חותמים עד שמצאנו את הטוב ביותר.'],
           ].map(([t,d]) => (
             <div key={t} className="rounded-2xl border bg-white p-5">
               <div className="flex items-center gap-2 text-lg font-bold"><CheckCircle2 size={18}/>{t}</div>
@@ -251,12 +283,12 @@ export default function App() {
           <h3 className="text-2xl font-extrabold">מצטרפים למשפחה</h3>
           <p className="text-neutral-600 mt-1">השאירו פרטים ונחזור עם ההצעה הטובה ביותר.</p>
           <div className="mt-4 bg-neutral-50 rounded-2xl border p-4">
-            <LeadForm defaultMsg="מעוניין/ת ברכב חדש 0 ק״מ + הצעת מימון מותאמת" whatsappNumber={whatsappNumber} />
+            <LeadForm defaultMsg="מעוניין/ת ברכב חדש 0 ק״מ + מסלול מימון מתאים" whatsappNumber={whatsappNumber} />
           </div>
         </div>
       </section>
 
-      {/* מודל הצעת מחיר פר־דגם */}
+      {/* מודל הצעת מחיר */}
       {openId && opened && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={closeCar}>
           <div className="bg-white rounded-2xl p-4 w-full max-w-xl" onClick={e => e.stopPropagation()}>
@@ -273,6 +305,9 @@ export default function App() {
             </div>
             <div className="mt-4 text-left">
               <button className="rounded-xl px-4 py-2 border" onClick={closeCar}>סגירה</button>
+            </div>
+            <div className="mt-2 text-[11px] text-neutral-500">
+              * תנאי המימון צמודי מדד ועשויים להשתנות לפי דירוג הלקוח.
             </div>
           </div>
         </div>
