@@ -1,4 +1,21 @@
-import React, { useEffect, useMemo, useState } from "react";
+import StaticCategoriesDrawer from "./components/StaticCategoriesDrawer";
+
+export default function App() {
+  const handleSelectCategory = (cat) => {
+    // כאן תעשה סינון מלאי לפי הקטגוריה שנבחרה (אופציונלי)
+    // setCategory(cat);
+    console.log("קטגוריה שנבחרה:", cat);
+  };
+
+  return (
+    <div dir="rtl">
+      <StaticCategoriesDrawer onSelect={handleSelectCategory} />
+      {/* ...שאר הדף... */}
+      <section id="contact" style={{padding:"80px 16px"}}>טופס צור קשר</section>
+      <section id="club" style={{padding:"80px 16px"}}>מועדון לקוחות R&M</section>
+    </div>
+  );
+}import React, { useEffect, useMemo, useState } from "react";
 import "./styles.css";
 
 /* ===== הגדרות כלליות ===== */
