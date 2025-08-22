@@ -16,7 +16,7 @@ const formatPrice = (n) => n.toLocaleString('he-IL', { style: 'currency', curren
 export default function App() {
   useEffect(() => {
     document.documentElement.dir = 'rtl'
-    document.title = 'YB Motors'
+    document.title = 'R&M Motors'
   }, [])
 
   const [query, setQuery] = useState('')
