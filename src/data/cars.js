@@ -1,0 +1,103 @@
+export const cars = [
+  // ——— עממיים ———
+  mk("Toyota","Corolla","סדאן","היברידי",2025, 149900,"toyota-corolla"),
+  mk("Toyota","Yaris Cross","פנאי/קרוסאובר","היברידי",2025, 139900,"toyota-yaris-cross"),
+  mk("Toyota","bZ4X","פנאי/קרוסאובר","חשמלי",2025, 229900,"toyota-bz4x"),
+  mk("Hyundai","i10","עירוני","בנזין/דיזל",2025, 83900,"hyundai-i10"),
+  mk("Hyundai","Elantra","סדאן","בנזין/דיזל",2025, 132900,"hyundai-elantra"),
+  mk("Hyundai","Ioniq 5","פנאי/קרוסאובר","חשמלי",2025, 219900,"hyundai-ioniq5"),
+  mk("Kia","Picanto","עירוני","בנזין/דיזל",2025, 85900,"kia-picanto"),
+  mk("Kia","Sportage","פנאי/קרוסאובר","היברידי",2025, 199900,"kia-sportage-h"),
+  mk("Kia","EV6","פנאי/קרוסאובר","חשמלי",2025, 239900,"kia-ev6"),
+  mk("Mazda","3","סדאן","בנזין/דיזל",2025, 149900,"mazda-3"),
+  mk("Mazda","CX-5","פנאי/קרוסאובר","בנזין/דיזל",2025, 199900,"mazda-cx5"),
+  mk("Skoda","Octavia","סדאן","בנזין/דיזל",2025, 159900,"skoda-octavia"),
+  mk("Skoda","Kodiaq","פנאי/קרוסאובר","בנזין/דיזל",2025, 229900,"skoda-kodiaq"),
+  mk("Volkswagen","Golf","עירוני","בנזין/דיזל",2025, 159900,"vw-golf"),
+  mk("Volkswagen","ID.4","פנאי/קרוסאובר","חשמלי",2025, 209900,"vw-id4"),
+  mk("Seat","Leon","עירוני","בנזין/דיזל",2025, 139900,"seat-leon"),
+  mk("Renault","Clio","עירוני","בנזין/דיזל",2025, 99900,"renault-clio"),
+  mk("Renault","Austral","פנאי/קרוסאובר","היברידי",2025, 184900,"renault-austral"),
+  mk("Peugeot","208","עירוני","בנזין/דיזל",2025, 109900,"peugeot-208"),
+  mk("Peugeot","3008","פנאי/קרוסאובר","היברידי",2025, 199900,"peugeot-3008"),
+  mk("Citroen","C3","עירוני","בנזין/דיזל",2025, 94900,"citroen-c3"),
+  mk("Opel","Mokka-e","פנאי/קרוסאובר","חשמלי",2025, 169900,"opel-mokkae"),
+  mk("Nissan","Qashqai","פנאי/קרוסאובר","היברידי",2025, 179900,"nissan-qashqai"),
+  mk("Mitsubishi","ASX","פנאי/קרוסאובר","בנזין/דיזל",2025, 139900,"mitsubishi-asx"),
+  mk("Suzuki","Swift","עירוני","בנזין/דיזל",2025, 94900,"suzuki-swift"),
+  mk("Honda","Jazz","עירוני","היברידי",2025, 129900,"honda-jazz"),
+  mk("Honda","ZR-V","פנאי/קרוסאובר","היברידי",2025, 199900,"honda-zrv"),
+  mk("Subaru","XV","פנאי/קרוסאובר","בנזין/דיזל",2025, 164900,"subaru-xv"),
+  mk("Jeep","Compass","פנאי/קרוסאובר","בנזין/דיזל",2025, 199900,"jeep-compass"),
+  mk("Tesla","Model 3","סדאן","חשמלי",2025, 179900,"tesla-model3"),
+  mk("Tesla","Model Y","פנאי/קרוסאובר","חשמלי",2025, 194900,"tesla-modely"),
+
+  // ——— מותגים סיניים נפוצים ———
+  mk("BYD","Atto 3","פנאי/קרוסאובר","חשמלי",2025, 144900,"byd-atto3"),
+  mk("BYD","Seal","סדאן","חשמלי",2025, 179900,"byd-seal"),
+  mk("Geely","Geometry C","פנאי/קרוסאובר","חשמלי",2025, 139900,"geely-geometryc"),
+  mk("Geely","Emgrand","סדאן","בנזין/דיזל",2025, 109900,"geely-emgrand"),
+  mk("Chery","Tiggo 7 Pro","פנאי/קרוסאובר","בנזין/דיזל",2025, 139900,"chery-tiggo7"),
+  mk("Chery","OMODA 5","פנאי/קרוסאובר","בנזין/דיזל",2025, 134900,"chery-omoda5"),
+  mk("MG","ZS EV","פנאי/קרוסאובר","חשמלי",2025, 144900,"mg-zsev"),
+  mk("GAC","Aion Y","פנאי/קרוסאובר","חשמלי",2025, 154900,"gac-aiony"),
+  mk("ORA","Funky Cat","עירוני","חשמלי",2025, 139900,"ora-cat"),
+
+  // ——— יוקרה ———
+  mk("Audi","Q5 45 TFSI","מנהלים","בנזין/דיזל",2025, 349900,"audi-q5"),
+  mk("Audi","e-tron GT","ספורט/על","חשמלי",2025, 699900,"audi-etron-gt"),
+  mk("BMW","3 Series","מנהלים","בנזין/דיזל",2025, 329900,"bmw-3"),
+  mk("BMW","iX","פנאי/קרוסאובר","חשמלי",2025, 579900,"bmw-ix"),
+  mk("Mercedes","GLC 300","מנהלים","בנזין/דיזל",2025, 459900,"mercedes-glc"),
+  mk("Mercedes","EQE","סדאן","חשמלי",2025, 499900,"mercedes-eqe"),
+  mk("Lexus","RX 450h+","פנאי/קרוסאובר","היברידי",2025, 449900,"lexus-rx"),
+  mk("Lexus","ES 300h","סדאן","היברידי",2025, 319900,"lexus-es"),
+  mk("Volvo","XC60 Recharge","פנאי/קרוסאובר","היברידי",2025, 429900,"volvo-xc60"),
+  mk("Volvo","EX30","פנאי/קרוסאובר","חשמלי",2025, 199900,"volvo-ex30"),
+  mk("Jaguar","F-Pace","פנאי/קרוסאובר","בנזין/דיזל",2025, 499900,"jaguar-fpace"),
+  mk("Porsche","Macan Electric","פנאי/קרוסאובר","חשמלי",2025, 699900,"porsche-macan-e"),
+  mk("Porsche","911 Carrera","ספורט/על","בנזין/דיזל",2025, 1_150_000,"porsche-911"),
+  mk("Maserati","Grecale","פנאי/קרוסאובר","בנזין/דיזל",2025, 689900,"maserati-grecale"),
+  mk("Land Rover","Range Rover Sport","פנאי/קרוסאובר","היברידי",2025, 899900,"rr-sport"),
+  mk("Tesla","Model S Plaid","סדאן","חשמלי",2025, 649900,"tesla-models"),
+
+  // ——— עלית/אולטרה ———
+  mk("Ferrari","Roma","ספורט/על","בנזין/דיזל",2025, 1_900_000,"ferrari-roma"),
+  mk("Lamborghini","Huracán","ספורט/על","בנזין/דיזל",2025, 2_400_000,"lambo-huracan"),
+  mk("Aston Martin","DB12","ספורט/על","בנזין/דיזל",2025, 1_800_000,"aston-db12"),
+  mk("Bentley","Continental GT","ספורט/על","בנזין/דיזל",2025, 1_700_000,"bentley-gt"),
+  mk("Rolls-Royce","Ghost","מנהלים","בנזין/דיזל",2025, 2_900_000,"rr-ghost"),
+
+  // ——— מסחריות ———
+  mk("Toyota","Proace","מסחרי","דיזל/בנזין",2025, 199900,"toyota-proace"),
+  mk("Mercedes","Vito","מסחרי","דיזל/בנזין",2025, 329900,"mercedes-vito"),
+  mk("Ford","Transit","מסחרי","דיזל/בנזין",2025, 239900,"ford-transit"),
+  mk("Citroen","Jumpy","מסחרי","דיזל/בנזין",2025, 179900,"citroen-jumpy"),
+  mk("Renault","Master E-Tech","מסחרי","חשמלי",2025, 319900,"renault-master-e"),
+
+  // ——— עוד דגמים נפוצים להגדלת המלאי ———
+  mk("Skoda","Scala","עירוני","בנזין/דיזל",2025, 129900,"skoda-scala"),
+  mk("Skoda","Enyaq","פנאי/קרוסאובר","חשמלי",2025, 239900,"skoda-enyaq"),
+  mk("Mazda","CX-60","פנאי/קרוסאובר","היברידי",2025, 289900,"mazda-cx60"),
+  mk("Nissan","X-Trail e-Power","פנאי/קרוסאובר","היברידי",2025, 229900,"nissan-xtrail"),
+  mk("Hyundai","Kona Electric","פנאי/קרוסאובר","חשמלי",2025, 169900,"hyundai-konae"),
+  mk("Kia","Niro Hybrid","פנאי/קרוסאובר","היברידי",2025, 174900,"kia-niro-h"),
+  mk("Kia","Niro EV","פנאי/קרוסאובר","חשמלי",2025, 194900,"kia-niro-ev"),
+  mk("Peugeot","e-208","עירוני","חשמלי",2025, 149900,"peugeot-e208"),
+  mk("Opel","Astra","סדאן","בנזין/דיזל",2025, 144900,"opel-astra"),
+  mk("Renault","Megane E-Tech","סדאן","חשמלי",2025, 189900,"renault-megane-e"),
+  mk("Volkswagen","Passat","מנהלים","בנזין/דיזל",2025, 209900,"vw-passat"),
+  mk("Audi","Q4 e-tron","פנאי/קרוסאובר","חשמלי",2025, 289900,"audi-q4"),
+  mk("BMW","X1","פנאי/קרוסאובר","בנזין/דיזל",2025, 279900,"bmw-x1"),
+  mk("Mercedes","GLA 200","פנאי/קרוסאובר","בנזין/דיזל",2025, 319900,"mercedes-gla"),
+  mk("Volvo","C40","פנאי/קרוסאובר","חשמלי",2025, 229900,"volvo-c40"),
+];
+
+function mk(brand, model, segment, powertrain, year, msrp, slug){
+  return {
+    id: `${brand}-${model}-${year}`.replace(/\s+/g,''),
+    brand, model, segment, powertrain, year, msrp,
+    image: `/cars/${slug}.jpg`,
+    tags: segment==="יוקרה"||segment==="ספורט/על" ? ["יוקרה"] : []
+  };
+}
