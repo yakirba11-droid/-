@@ -1,725 +1,635 @@
 // src/App.jsx
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import "./styles.css";
 
-/* ========= קבועים ========= */
+/* ===== קבועים כלליים ===== */
 const PHONE_HUMAN = "052-640-6728";
 const PHONE_INTL = "972526406728";
-const WA = (txt = "שלום, אשמח להצעה") =>
+const WA = (txt = "היי, אשמח להצעה") =>
   `https://wa.me/${PHONE_INTL}?text=${encodeURIComponent(txt)}`;
 
-// ריבית לחישוב (לא מוצגת באתר)
-const RATE_YEAR = 0.059;
-const RATE_MONTH = RATE_YEAR / 12;
-
-// סיוע עיצוב מהיר (אינליין כדי לא לשבור קבצים קיימים)
-const S = {
-  page: {
-    direction: "rtl",
-    fontFamily:
-      "-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,Heebo,Assistant,sans-serif",
-    color: "#0f172a",
-    background: "#f7f7fb",
-    lineHeight: 1.4,
-  },
-  container: {
-    maxWidth: 1060,
-    margin: "0 auto",
-    padding: "16px",
-  },
-  hero: {
-    position: "relative",
-    borderRadius: 24,
-    padding: "20px 16px",
-    margin: "10px 0 14px",
-    color: "white",
-    background:
-      "linear-gradient(120deg, #5136f5 0%, #9b54ff 35%, #ff7a00 100%)",
-    boxShadow: "0 10px 30px rgba(0,0,0,.12)",
-    overflow: "hidden",
-  },
-  chipBar: { display: "flex", gap: 10, flexWrap: "wrap", marginTop: 8 },
-  chipLight: {
-    background: "#fff",
-    color: "#0f172a",
-    borderRadius: 999,
-    padding: "10px 16px",
-    fontWeight: 600,
-    boxShadow: "0 6px 20px rgba(15,23,42,.12)",
-  },
-  chipDark: {
-    background: "#111827",
-    color: "#fff",
-    borderRadius: 999,
-    padding: "12px 16px",
-    fontWeight: 700,
-    boxShadow: "0 6px 20px rgba(15,23,42,.22)",
-  },
-  section: {
-    background: "#fff",
-    borderRadius: 22,
-    padding: 16,
-    margin: "16px 0",
-    boxShadow: "0 10px 25px rgba(0,0,0,.06)",
-  },
-  h2: { fontSize: 22, margin: "0 0 6px", fontWeight: 800 },
-  sub: { color: "#475569", marginBottom: 10, fontSize: 14 },
-  row: { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" },
-  input: {
-    width: "100%",
-    height: 46,
-    borderRadius: 14,
-    border: "1px solid #e5e7eb",
-    padding: "0 14px",
-    background: "#fff",
-    fontSize: 16,
-  },
-  slider: { width: "100%" },
-  card: {
-    background: "#fff",
-    borderRadius: 20,
-    padding: 14,
-    display: "grid",
-    gridTemplateColumns: "96px 1fr",
-    gap: 12,
-    alignItems: "center",
-    border: "1px solid #eee",
-  },
-  img: {
-    width: 96,
-    height: 60,
-    objectFit: "cover",
-    borderRadius: 12,
-    background: "#fff",
-    border: "1px solid #eee",
-  },
-  small: { color: "#64748b", fontSize: 13 },
-  btn: {
-    borderRadius: 999,
-    padding: "12px 18px",
-    border: "none",
-    fontWeight: 800,
-    cursor: "pointer",
-    boxShadow: "0 8px 20px rgba(0,0,0,.12)",
-  },
-  btnPrimary: {
-    background: "#111827",
-    color: "#fff",
-  },
-  btnGhost: {
-    background: "#fff",
-    color: "#111827",
-    border: "1px solid #e5e7eb",
-  },
-  footer: {
-    background: "#111827",
-    color: "#cbd5e1",
-    borderRadius: 22,
-    padding: 16,
-    margin: "18px 0 40px",
-  },
-};
-
-/* ========= פונקציות פיננסיות ========= */
-function pmt(rate, nper, pv, fv = 0) {
-  if (rate === 0) return (pv - fv) / nper;
-  const r1 = Math.pow(1 + rate, nper);
-  return (rate * (pv * r1 - fv)) / (r1 - 1);
-}
-function monthlyRegular({ price, down, months }) {
+/* ===== חישובי החזר (בלי הצגת ריבית ללקוח) ===== */
+const ANNUAL_RATE = 0.059; // 5.9% לא להצגה
+const r = ANNUAL_RATE / 12;
+const currency = new Intl.NumberFormat("he-IL", {
+  style: "currency",
+  currency: "ILS",
+  maximumFractionDigits: 0,
+});
+function pmt({ price, down = 0, months, balloon = 0 }) {
   const pv = Math.max(0, price - down);
-  return Math.max(0, pmt(RATE_MONTH, months, pv));
+  if (months <= 0) return 0;
+  if (r === 0) return (pv - balloon) / months;
+  // PMT עם ערך עתידי (בלון)
+  const num = r * (pv - balloon / Math.pow(1 + r, months));
+  const den = 1 - Math.pow(1 + r, -months);
+  return num / den;
 }
-function monthlyBalloon({ price, down, months, balloonRatio }) {
-  const pv = Math.max(0, price - down);
-  const fv = Math.max(0, price * balloonRatio);
-  return Math.max(0, pmt(RATE_MONTH, months, pv, fv));
-}
 
-/* ========= דאטה: מאגר דגמים ========= */
-/* הערה: התמונות הן placeholder לבנות, כדי לשמור קו נקי.
-   ניתן להחליף לכתובות CDN של יצרנים בעתיד. */
-const carImage = (brand, model) =>
-  `https://dummyimage.com/800x480/ffffff/111111.png&text=${encodeURIComponent(
-    `${brand} ${model}`
-  )}`;
-
-// type: עירוני / משפחתי / פנאי/קרוסאובר / מנהלים / מסחרי / טנדר / יוקרה
-// fuel: בנזין/דיזל / היברידי / חשמלי
-const FLEET = [
-  // עירוני
-  { brand: "Kia", model: "Picanto", type: "עירוני", fuel: "בנזין/דיזל", price: 85000 },
-  { brand: "Hyundai", model: "i10", type: "עירוני", fuel: "בנזין/דיזל", price: 87000 },
-  { brand: "Suzuki", model: "Swift", type: "עירוני", fuel: "בנזין/דיזל", price: 102000 },
-
-  // משפחתי / סדאן
-  { brand: "Toyota", model: "Corolla Hybrid", type: "משפחתי", fuel: "היברידי", price: 155000 },
-  { brand: "Hyundai", model: "Elantra", type: "משפחתי", fuel: "בנזין/דיזל", price: 139000 },
-  { brand: "Mazda", model: "3", type: "משפחתי", fuel: "בנזין/דיזל", price: 142000 },
-
-  // פנאי / קרוסאובר
+/* ===== מאגר מודלים לדוגמא (אפשר להרחיב בקלות) ===== */
+const MODELS = [
+  // עירוני/בנזין־דיזל
+  { brand: "Kia", model: "Picanto", type: "עירוני", fuel: "בנזין/דיזל", price: 95000 },
+  { brand: "Hyundai", model: "i10", type: "עירוני", fuel: "בנזין/דיזל", price: 98000 },
+  { brand: "Suzuki", model: "Swift", type: "עירוני", fuel: "בנזין/דיזל", price: 118000 },
+  { brand: "Volkswagen", model: "Golf", type: "עירוני", fuel: "בנזין/דיזל", price: 169000 },
+  // משפחתי/סדאן
+  { brand: "Toyota", model: "Corolla Hybrid", type: "משפחתי", fuel: "היברידי", price: 162000 },
+  { brand: "Hyundai", model: "Elantra", type: "משפחתי", fuel: "בנזין/דיזל", price: 155000 },
+  { brand: "Mazda", model: "3", type: "משפחתי", fuel: "בנזין/דיזל", price: 165000 },
+  // פנאי/קרוסאובר
   { brand: "BYD", model: "Atto 3", type: "פנאי/קרוסאובר", fuel: "חשמלי", price: 165000 },
-  { brand: "MG", model: "ZS EV", type: "פנאי/קרוסאובר", fuel: "חשמלי", price: 149000 },
-  { brand: "Mazda", model: "CX-30", type: "פנאי/קרוסאובר", fuel: "בנזין/דיזל", price: 158000 },
-  { brand: "Mazda", model: "CX-5", type: "פנאי/קרוסאובר", fuel: "בנזין/דיזל", price: 198000 },
-  { brand: "Nissan", model: "Qashqai", type: "פנאי/קרוסאובר", fuel: "בנזין/דיזל", price: 169000 },
-  { brand: "Hyundai", model: "Tucson", type: "פנאי/קרוסאובר", fuel: "בנזין/דיזל", price: 175000 },
-  { brand: "Skoda", model: "Octavia", type: "פנאי/קרוסאובר", fuel: "בנזין/דיזל", price: 165000 },
-
-  // מנהלים
-  { brand: "BMW", model: "320i", type: "מנהלים", fuel: "בנזין/דיזל", price: 299000 },
-  { brand: "Mercedes", model: "C200", type: "מנהלים", fuel: "בנזין/דיזל", price: 325000 },
-  { brand: "Audi", model: "A4", type: "מנהלים", fuel: "בנזין/דיזל", price: 295000 },
-
-  // יוקרה / פרימיום
-  { brand: "Audi", model: "Q5 45 TFSI", type: "יוקרה", fuel: "בנזין/דיזל", price: 365000 },
-  { brand: "Mercedes", model: "GLC 300", type: "יוקרה", fuel: "בנזין/דיזל", price: 435000 },
-  { brand: "Volvo", model: "XC60 Recharge", type: "יוקרה", fuel: "היברידי", price: 455000 },
-  { brand: "Porsche", model: "Taycan", type: "יוקרה", fuel: "חשמלי", price: 780000 },
-  { brand: "Range Rover", model: "Autobiography", type: "יוקרה", fuel: "בנזין/דיזל", price: 1050000 },
-  { brand: "Bentley", model: "Continental GT", type: "יוקרה", fuel: "בנזין/דיזל", price: 1800000 },
-
+  { brand: "MG", model: "ZS EV", type: "פנאי/קרוסאובר", fuel: "חשמלי", price: 145000 },
+  { brand: "Mazda", model: "CX-30", type: "פנאי/קרוסאובר", fuel: "בנזין/דיזל", price: 175000 },
+  { brand: "Kia", model: "Sportage", type: "פנאי/קרוסאובר", fuel: "היברידי", price: 205000 },
+  { brand: "Hyundai", model: "Tucson", type: "פנאי/קרוסאובר", fuel: "היברידי", price: 199000 },
+  { brand: "Skoda", model: "Octavia", type: "פנאי/קרוסאובר", fuel: "בנזין/דיזל", price: 178000 },
+  { brand: "Skoda", model: "Kodiaq", type: "פנאי/קרוסאובר", fuel: "בנזין/דיזל", price: 235000 },
+  { brand: "Volkswagen", model: "Tiguan", type: "פנאי/קרוסאובר", fuel: "בנזין/דיזל", price: 225000 },
+  { brand: "Renault", model: "Captur", type: "פנאי/קרוסאובר", fuel: "היברידי", price: 155000 },
+  { brand: "Peugeot", model: "2008", type: "פנאי/קרוסאובר", fuel: "בנזין/דיזל", price: 145000 },
   // חשמליים פופולריים
-  { brand: "Tesla", model: "Model 3", type: "משפחתי", fuel: "חשמלי", price: 189000 },
-  { brand: "Tesla", model: "Model Y", type: "פנאי/קרוסאובר", fuel: "חשמלי", price: 219000 },
-  { brand: "Hyundai", model: "Kona Electric", type: "פנאי/קרוסאובר", fuel: "חשמלי", price: 179000 },
-  { brand: "Skoda", model: "Enyaq", type: "פנאי/קרוסאובר", fuel: "חשמלי", price: 235000 },
-
-  // מסחרי / טנדר
-  { brand: "Toyota", model: "HiLux", type: "טנדר", fuel: "בנזין/דיזל", price: 245000 },
-  { brand: "Ford", model: "Transit", type: "מסחרי", fuel: "בנזין/דיזל", price: 239000 },
-  { brand: "Mercedes", model: "Vito", type: "מסחרי", fuel: "בנזין/דיזל", price: 289000 },
+  { brand: "Tesla", model: "Model 3", type: "סדאן", fuel: "חשמלי", price: 205000 },
+  { brand: "Tesla", model: "Model Y", type: "פנאי/קרוסאובר", fuel: "חשמלי", price: 225000 },
+  { brand: "BYD", model: "Dolphin", type: "עירוני", fuel: "חשמלי", price: 129000 },
+  { brand: "Geely", model: "Geometry C", type: "פנאי/קרוסאובר", fuel: "חשמלי", price: 155000 },
+  { brand: "GWM", model: "Ora", type: "עירוני", fuel: "חשמלי", price: 129000 },
+  { brand: "Fiat", model: "500e", type: "עירוני", fuel: "חשמלי", price: 138000 },
+  // יוקרה
+  { brand: "Audi", model: "Q5 45 TFSI", type: "יוקרה", fuel: "בנזין/דיזל", price: 335000 },
+  { brand: "Mercedes", model: "GLC 300", type: "יוקרה", fuel: "בנזין/דיזל", price: 395000 },
+  { brand: "Volvo", model: "XC60 Recharge", type: "יוקרה", fuel: "היברידי", price: 365000 },
+  { brand: "BMW", model: "X5", type: "יוקרה", fuel: "היברידי", price: 590000 },
+  { brand: "Range Rover", model: "Sport", type: "יוקרה", fuel: "היברידי", price: 850000 },
+  { brand: "Porsche", model: "Macan", type: "יוקרה", fuel: "בנזין/דיזל", price: 640000 },
+  { brand: "Lexus", model: "RX", type: "יוקרה", fuel: "היברידי", price: 420000 },
+  { brand: "Genesis", model: "GV70", type: "יוקרה", fuel: "בנזין/דיזל", price: 380000 },
+  // מסחרי
+  { brand: "Toyota", model: "Proace City", type: "מסחרי", fuel: "בנזין/דיזל", price: 149000 },
+  { brand: "Ford", model: "Transit", type: "מסחרי", fuel: "בנזין/דיזל", price: 210000 },
 ];
 
-/* ========= קומפוננטות עזר ========= */
-const H3 = ({ children }) => (
-  <div style={{ fontWeight: 800, fontSize: 18, marginBottom: 6 }}>{children}</div>
-);
-
-const Pill = ({ active, children, onClick }) => (
+/* ===== רכיבי UI קטנים ===== */
+const Pill = ({ active, onClick, children, ariaLabel }) => (
   <button
     type="button"
+    className={`pill ${active ? "pill--active" : ""}`}
     onClick={onClick}
-    style={{
-      ...S.chipLight,
-      ...(active ? { background: "#111827", color: "#fff" } : {}),
-    }}
-    aria-pressed={!!active}
+    aria-pressed={active}
+    aria-label={ariaLabel}
   >
     {children}
   </button>
 );
 
-function Money({ val }) {
-  const f = new Intl.NumberFormat("he-IL");
-  return <b>{f.format(Math.round(val))} ₪</b>;
-}
+const Section = ({ title, subtitle, children, id }) => (
+  <section id={id} className="section card">
+    <header className="section__head">
+      <h2 className="h2">{title}</h2>
+      {subtitle && <p className="muted">{subtitle}</p>}
+    </header>
+    {children}
+  </section>
+);
 
-/* ========= עמוד ========= */
-export default function App() {
-  // טופ בר כפתורים
-  const topButtons = (
-    <div style={S.chipBar}>
-      <a href={WA("שלום, אשמח להצעה על רכב חדש 0 ק\"מ")} style={S.chipLight}>
-        דברו איתי בוואטסאפ
-      </a>
-      <a href={`tel:${PHONE_HUMAN.replaceAll("-", "")}`} style={S.chipDark}>
-        התקשרו · {PHONE_HUMAN}
-      </a>
-    </div>
-  );
-
-  /* ----- מחשבון הלוואה ----- */
-  const [tabLoan, setTabLoan] = useState("balloon"); // 'balloon' | 'regular'
+/* ===== מחשבון הלוואה ===== */
+function LoanCalculator() {
+  const [tab, setTab] = useState("balloon"); // 'regular' | 'balloon'
   const [price, setPrice] = useState(150000);
   const [down, setDown] = useState(30000);
-  const [months, setMonths] = useState(60);
-  const [balloon, setBalloon] = useState(0.5); // עד 50%
+  const [monthsRegular, setMonthsRegular] = useState(60); // עד 100
+  const [monthsBalloon, setMonthsBalloon] = useState(60); // עד 60
+  const maxBalloon = Math.round(price * 0.5);
+  const [balloon, setBalloon] = useState(0);
 
-  const pay = useMemo(() => {
-    return tabLoan === "balloon"
-      ? monthlyBalloon({ price, down, months, balloonRatio: balloon })
-      : monthlyRegular({ price, down, months });
-  }, [tabLoan, price, down, months, balloon]);
+  const monthly = useMemo(() => {
+    if (tab === "regular")
+      return pmt({ price, down, months: monthsRegular, balloon: 0 });
+    return pmt({ price, down, months: monthsBalloon, balloon });
+  }, [tab, price, down, monthsRegular, monthsBalloon, balloon]);
 
-  /* ----- מאתר רכב חכם ----- */
-  const [budget, setBudget] = useState(7000); // תקציב חודשי
-  const [fType, setFType] = useState("הכל");
-  const [fFuel, setFFuel] = useState("הכל");
+  const financeAmount = Math.max(0, price - down);
+  const months = tab === "regular" ? monthsRegular : monthsBalloon;
 
-  // החזר "החל מ" למאתר: מסלול בלון 60 ח', בלון 50%, ללא מקדמה.
-  const monthlyForFinder = (carPrice) =>
-    monthlyBalloon({
-      price: carPrice,
-      down: 0,
-      months: 60,
-      balloonRatio: 0.5,
+  return (
+    <div className="loan">
+      <div className="tabs" role="tablist" aria-label="מסלולי מימון">
+        <button
+          role="tab"
+          className={`tab ${tab === "regular" ? "is-active" : ""}`}
+          onClick={() => setTab("regular")}
+        >
+          רגיל (עד 100 ח׳)
+        </button>
+        <button
+          role="tab"
+          className={`tab ${tab === "balloon" ? "is-active" : ""}`}
+          onClick={() => setTab("balloon")}
+        >
+          בלון (עד 60 ח׳)
+        </button>
+      </div>
+
+      <div className="grid">
+        <label className="field">
+          <span>מחיר רכב</span>
+          <input
+            inputMode="numeric"
+            value={price}
+            onChange={(e) => setPrice(Math.max(0, +e.target.value.replace(/\D/g, "")))}
+            aria-label="מחיר הרכב"
+          />
+        </label>
+
+        <label className="field">
+          <span>מקדמה</span>
+          <input
+            inputMode="numeric"
+            value={down}
+            onChange={(e) =>
+              setDown(Math.min(price, Math.max(0, +e.target.value.replace(/\D/g, ""))))
+            }
+            aria-label="סכום מקדמה"
+          />
+        </label>
+      </div>
+
+      <div className="field">
+        <div className="row space-between">
+          <span>מס׳ חודשים</span>
+          <span className="muted">{months} ח׳</span>
+        </div>
+        <input
+          type="range"
+          min="6"
+          max={tab === "regular" ? 100 : 60}
+          step="1"
+          value={months}
+          onChange={(e) =>
+            tab === "regular"
+              ? setMonthsRegular(+e.target.value)
+              : setMonthsBalloon(+e.target.value)
+          }
+          aria-label="מספר החודשים"
+        />
+      </div>
+
+      {tab === "balloon" && (
+        <div className="field">
+          <div className="row space-between">
+            <span>סכום בלון בסוף התקופה</span>
+            <span className="muted">{currency.format(balloon)}</span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max={maxBalloon}
+            step="500"
+            value={balloon}
+            onChange={(e) => setBalloon(Math.min(maxBalloon, +e.target.value))}
+            aria-label="סכום בלון"
+          />
+          <div className="tip">ניתן לבחור כל סכום עד {currency.format(maxBalloon)}.</div>
+        </div>
+      )}
+
+      <div className="result card--soft">
+        <div className="result__item">
+          <div className="muted">החזר חודשי משוער:</div>
+          <div className="result__value">{currency.format(monthly)}</div>
+        </div>
+        <div className="result__item">
+          <div className="muted">סכום מימון:</div>
+          <div className="result__value">{currency.format(financeAmount)}</div>
+        </div>
+        {tab === "balloon" && (
+          <div className="result__item">
+            <div className="muted">יתרת בלון בסוף התקופה:</div>
+            <div className="result__value">{currency.format(balloon)}</div>
+          </div>
+        )}
+      </div>
+
+      <p className="tiny muted">
+        * החישוב להמחשה בלבד; הצעה סופית תיקבע לאחר בדיקה אישית. אין לראות בתוצאה התחייבות.
+      </p>
+
+      <div className="row gap">
+        <a className="btn" href={WA("מעוניין בהצעה לפי החישוב שביצעתי באתר")}>
+          בקשת הצעה בווטסאפ
+        </a>
+        <a className="btn btn--ghost" href={`tel:${PHONE_HUMAN.replaceAll("-", "")}`}>
+          חייגו {PHONE_HUMAN}
+        </a>
+      </div>
+    </div>
+  );
+}
+
+/* ===== “מאתר רכב חכם” – צ׳אט קצר להתאמה ===== */
+function SmartMatcher() {
+  // צעד 1: תקציב חודשי
+  const [step, setStep] = useState(1);
+  const [budget, setBudget] = useState(2500);
+  const [fuel, setFuel] = useState("הכל");
+  const [type, setType] = useState("הכל");
+
+  // חישוב התאמות: בלון 60 ח׳ עם יתרה 60% (לא מוצג ללקוח)
+  const matches = useMemo(() => {
+    const balloonRatio = 0.6; // לא מוצג
+    const list = MODELS.filter((m) => {
+      const okFuel = fuel === "הכל" || m.fuel === fuel;
+      const okType = type === "הכל" || m.type === type;
+      return okFuel && okType;
+    }).map((m) => {
+      const monthly = pmt({
+        price: m.price,
+        down: 0,
+        months: 60,
+        balloon: Math.round(m.price * balloonRatio),
+      });
+      return { ...m, monthly };
     });
 
-  const finderCars = useMemo(() => {
-    const items = FLEET.map((c) => ({
-      ...c,
-      month: monthlyForFinder(c.price),
-      img: carImage(c.brand, c.model),
-    }))
-      .filter((c) => (fType === "הכל" ? true : c.type === fType))
-      .filter((c) => (fFuel === "הכל" ? true : c.fuel === fFuel))
-      .filter((c) => c.month <= budget + 2000) // מעט סלחני לתקציב
-      .sort((a, b) => a.month - b.month)
-      .slice(0, 30);
-    return items;
-  }, [budget, fType, fFuel]);
+    // הגבלה לפי תקציב אם יש התאמות
+    const inBudget = list.filter((x) => x.monthly <= budget * 1.02);
+    const base = (inBudget.length ? inBudget : list).sort(
+      (a, b) => a.monthly - b.monthly
+    );
+    return base.slice(0, 5);
+  }, [budget, fuel, type]);
 
-  /* ----- טפסים ----- */
-  // יצירת קשר
-  const [lead, setLead] = useState({
+  return (
+    <div className="chat card">
+      <div className="chat__head">
+        <div className="bot">🤖</div>
+        <div>
+          <div className="h3 tight">מאתר רכב חכם</div>
+          <div className="muted tiny">שאלות קצרות ➜ התאמות מהירות</div>
+        </div>
+      </div>
+
+      {/* צעד 1 */}
+      {step === 1 && (
+        <div className="chat__step">
+          <div className="q">מה התקציב החודשי המשוער לרכב?</div>
+          <div className="field">
+            <div className="row space-between">
+              <span>תקציב:</span>
+              <b>{currency.format(budget)}</b>
+            </div>
+            <input
+              type="range"
+              min="1000"
+              max="15000"
+              step="100"
+              value={budget}
+              onChange={(e) => setBudget(+e.target.value)}
+              aria-label="תקציב חודשי"
+            />
+          </div>
+          <div className="row end">
+            <button className="btn" onClick={() => setStep(2)}>
+              הבא
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* צעד 2 */}
+      {step === 2 && (
+        <div className="chat__step">
+          <div className="q">העדפת הנעה?</div>
+          <div className="row wrap gap">
+            {["הכל", "בנזין/דיזל", "היברידי", "חשמלי"].map((f) => (
+              <Pill key={f} active={fuel === f} onClick={() => setFuel(f)}>
+                {f}
+              </Pill>
+            ))}
+          </div>
+          <div className="row space-between">
+            <button className="btn btn--ghost" onClick={() => setStep(1)}>
+              חזור
+            </button>
+            <button className="btn" onClick={() => setStep(3)}>
+              הבא
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* צעד 3 */}
+      {step === 3 && (
+        <div className="chat__step">
+          <div className="q">איזה סוג רכב תרצו?</div>
+          <div className="row wrap gap">
+            {[
+              "הכל",
+              "עירוני",
+              "משפחתי",
+              "סדאן",
+              "פנאי/קרוסאובר",
+              "מנהלים",
+              "יוקרה",
+              "מסחרי",
+            ].map((t) => (
+              <Pill key={t} active={type === t} onClick={() => setType(t)}>
+                {t}
+              </Pill>
+            ))}
+          </div>
+          <div className="row space-between">
+            <button className="btn btn--ghost" onClick={() => setStep(2)}>
+              חזור
+            </button>
+            <button className="btn" onClick={() => setStep(4)}>
+              הצג התאמות
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* תוצאות */}
+      {step === 4 && (
+        <div className="chat__step">
+          <div className="q">ההתאמות הבולטות עבורך:</div>
+          <ul className="matches">
+            {matches.map((m, i) => (
+              <li key={i} className="match card--soft">
+                <div className="match__title">
+                  {m.brand} {m.model}
+                </div>
+                <div className="muted tiny">
+                  {m.type} · {m.fuel}
+                </div>
+                <div className="match__monthly">
+                  החל מ־{currency.format(m.monthly)} לחודש
+                </div>
+                <div className="row gap">
+                  <a
+                    className="btn"
+                    href={WA(
+                      `שלום, מעניין אותי ${m.brand} ${m.model}. אשמח להצעת מימון ולהמשך תהליך.`
+                    )}
+                  >
+                    קבלו הצעה
+                  </a>
+                  <a className="btn btn--ghost" href={`tel:${PHONE_HUMAN.replaceAll("-", "")}`}>
+                    חייגו {PHONE_HUMAN}
+                  </a>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="row space-between">
+            <button className="btn btn--ghost" onClick={() => setStep(3)}>
+              חזרה לבחירה
+            </button>
+            <button className="btn" onClick={() => setStep(1)}>
+              התחל מחדש
+            </button>
+          </div>
+          <p className="tiny muted">
+            * מוצג רק החזר חודשי משוער. נאתר עבורך את המסלול המשתלם ביותר ונעדכן בהצעה מסודרת.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ===== טפסים ===== */
+function ContactForm() {
+  const [form, setForm] = useState({
     name: "",
     phone: "",
     email: "",
     city: "",
-    message: "",
+    msg: "",
   });
-  const submitLead = () => {
-    const txt = `היי R&M, אשמח להצעה מותאמת אישית.
-שם: ${lead.name}
-טלפון: ${lead.phone}
-אימייל: ${lead.email}
-עיר: ${lead.city}
-הודעה: ${lead.message}`;
-    window.location.href = WA(txt);
+  const on = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+
+  const send = (e) => {
+    e.preventDefault();
+    const text = `שם: ${form.name}\nטלפון: ${form.phone}\nמייל: ${form.email}\nעיר: ${form.city}\nהודעה: ${form.msg}`;
+    window.open(WA(`בקשת יצירת קשר:\n${text}`), "_blank");
   };
 
-  // טרייד-אין
-  const [ti, setTI] = useState({
+  return (
+    <form className="form card" onSubmit={send} aria-label="טופס יצירת קשר">
+      <h3 className="h3">יצירת קשר</h3>
+      <p className="muted">
+        נחזור אליך עם הצעה מותאמת אישית — רק כשנמצא עבורך את הטוב ביותר.
+      </p>
+      <div className="grid">
+        <label className="field">
+          <span>שם מלא</span>
+          <input value={form.name} onChange={on("name")} required />
+        </label>
+        <label className="field">
+          <span>טלפון</span>
+          <input
+            value={form.phone}
+            onChange={on("phone")}
+            required
+            inputMode="tel"
+            pattern="[\d\- ]+"
+          />
+        </label>
+        <label className="field">
+          <span>אימייל</span>
+          <input type="email" value={form.email} onChange={on("email")} />
+        </label>
+        <label className="field">
+          <span>עיר</span>
+          <input value={form.city} onChange={on("city")} />
+        </label>
+      </div>
+      <label className="field">
+        <span>הודעה</span>
+        <textarea rows="3" value={form.msg} onChange={on("msg")} />
+      </label>
+      <button className="btn" type="submit">
+        שלחו ונחזור אליכם
+      </button>
+    </form>
+  );
+}
+
+function TradeInForm() {
+  const [form, setForm] = useState({
     name: "",
     phone: "",
     email: "",
     city: "",
     brand: "",
     model: "",
-    plate: "",
+    license: "",
     year: "",
     km: "",
     notes: "",
+    photos: [],
   });
-  const submitTI = () => {
-    const txt = `בקשת טרייד-אין אונליין:
-שם: ${ti.name}
-טלפון: ${ti.phone}
-אימייל: ${ti.email}
-עיר: ${ti.city}
-מותג/דגם: ${ti.brand} ${ti.model}
-מס' רישוי: ${ti.plate}
-שנת יצור: ${ti.year}
-ק"מ: ${ti.km}
-הערות: ${ti.notes}`;
-    window.location.href = WA(txt);
+  const on = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+
+  const send = (e) => {
+    e.preventDefault();
+    const text = `טופס טרייד־אין\nשם: ${form.name}\nטלפון: ${form.phone}\nאימייל: ${form.email}\nעיר: ${form.city}\nמותג: ${form.brand}\nדגם: ${form.model}\nמס׳ רישוי: ${form.license}\nשנת יצור: ${form.year}\nק״מ: ${form.km}\nהערות: ${form.notes}\n(נשלחו/יישלחו תמונות בהודעת המשך)`;
+    window.open(WA(text), "_blank");
   };
 
   return (
-    <div style={S.page}>
-      <div style={S.container}>
-        {/* HERO */}
-        <header style={S.hero} aria-label="R&M רכבי יוקרה וספורט בהתאמה אישית">
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-            <div>
-              <div style={{ fontSize: 18, fontWeight: 900 }}>R&amp;M — חדש 0 ק״מ</div>
-              <div style={{ opacity: 0.95, marginTop: 4 }}>
-                מתמחים בהתאמת רכב מושלם ומימון משתלם במיוחד.
-              </div>
-            </div>
-            <div
-              aria-hidden
-              style={{
-                background: "#ff9d1b",
-                color: "#111",
-                fontWeight: 900,
-                borderRadius: 16,
-                padding: "10px 14px",
-                alignSelf: "flex-start",
-                whiteSpace: "nowrap",
-              }}
-            >
-              R&amp;M
-            </div>
-          </div>
-
-          {topButtons}
-
-          <div style={{ marginTop: 14 }}>
-            <div style={{ fontSize: 28, fontWeight: 900, lineHeight: 1.2 }}>
-              מוצאים לך את הרכב המושלם — ודואגים למימון המשתלם ביותר.
-            </div>
-            <div style={{ marginTop: 8, opacity: 0.95 }}>
-              חדש 0 ק״מ בלבד · ליווי מלא עד ואחרי המסירה.
-            </div>
-          </div>
-
-          <div style={{ ...S.chipBar, marginTop: 12 }}>
-            <a href="#loan" style={S.chipLight}>
-              מחשבון הלוואה
-            </a>
-            <a href="#finder" style={S.chipLight}>
-              מאתר רכב חכם
-            </a>
-            <a href="#lead" style={S.chipLight}>
-              יצירת קשר
-            </a>
-            <a href="#tradein" style={S.chipLight}>
-              טרייד-אין
-            </a>
-          </div>
-        </header>
-
-        {/* מאתר רכב חכם */}
-        <section id="finder" style={S.section} aria-label="מאתר רכב חכם">
-          <h2 style={S.h2}>מאתר רכב חכם</h2>
-          <div style={S.sub}>
-            בחרו תקציב חודשי משוער – מציגים דגמים מתאימים והחזר חודשי
-            התחל מ (מסלול בלון 60 ח׳, בלון 50%).
-          </div>
-
-          <H3>תקציב חודשי</H3>
+    <form className="form card" onSubmit={send} aria-label="טופס טרייד־אין">
+      <h3 className="h3">טרייד־אין אונליין</h3>
+      <p className="muted">
+        הערכת שווי מהירה מרחוק וקידום בעסקה חדשה — ממלאים פרטים ומצרפים תמונות.
+      </p>
+      <div className="grid">
+        <label className="field">
+          <span>שם מלא</span>
+          <input value={form.name} onChange={on("name")} required />
+        </label>
+        <label className="field">
+          <span>טלפון</span>
           <input
-            style={S.slider}
-            type="range"
-            min={800}
-            max={20000}
-            value={budget}
-            onChange={(e) => setBudget(+e.target.value)}
+            value={form.phone}
+            onChange={on("phone")}
+            required
+            inputMode="tel"
+            pattern="[\d\- ]+"
           />
-          <div style={{ marginBottom: 8 }}>
-            <Money val={budget} /> לחודש
-          </div>
-
-          <H3>סוגי רכבים</H3>
-          <div style={S.row}>
-            {["הכל", "עירוני", "משפחתי", "פנאי/קרוסאובר", "מנהלים", "מסחרי", "טנדר", "יוקרה"].map(
-              (t) => (
-                <Pill key={t} active={fType === t} onClick={() => setFType(t)}>
-                  {t}
-                </Pill>
-              )
-            )}
-          </div>
-
-          <H3 style={{ marginTop: 10 }}>סוג הנעה</H3>
-          <div style={S.row}>
-            {["הכל", "בנזין/דיזל", "היברידי", "חשמלי"].map((t) => (
-              <Pill key={t} active={fFuel === t} onClick={() => setFFuel(t)}>
-                {t}
-              </Pill>
-            ))}
-          </div>
-
-          <div style={{ marginTop: 14, display: "grid", gap: 12 }}>
-            {finderCars.map((c, idx) => (
-              <article key={idx} style={S.card}>
-                <img
-                  src={c.img}
-                  alt={`${c.brand} ${c.model}`}
-                  loading="lazy"
-                  style={S.img}
-                />
-                <div>
-                  <div style={{ fontWeight: 900 }}>
-                    {c.brand} {c.model}
-                  </div>
-                  <div style={S.small}>
-                    {c.type} · {c.fuel}
-                  </div>
-                  <div style={{ marginTop: 6, fontSize: 16 }}>
-                    החל מ <Money val={c.month} /> לחודש
-                  </div>
-                  <div style={{ marginTop: 8 }}>
-                    <a
-                      href={WA(
-                        `היי, בעניין ${c.brand} ${c.model} — אשמח להצעה. החזר חודשי משוער: ${Math.round(
-                          c.month
-                        )} ₪ לחודש.`
-                      )}
-                      style={{ ...S.btn, ...S.btnGhost }}
-                    >
-                      קבלו הצעה
-                    </a>
-                  </div>
-                </div>
-              </article>
-            ))}
-
-            {finderCars.length === 0 && (
-              <div style={S.small}>
-                לא נמצאו דגמים בתקציב הנוכחי. נסו להעלות מעט את התקציב או לשנות
-                סינון.
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* מחשבון הלוואה */}
-        <section id="loan" style={S.section} aria-label="מחשבון הלוואה">
-          <h2 style={S.h2}>מחשבון הלוואה</h2>
-          <div style={S.row}>
-            <Pill active={tabLoan === "regular"} onClick={() => setTabLoan("regular")}>
-              רגיל (עד 100 ח׳)
-            </Pill>
-            <Pill active={tabLoan === "balloon"} onClick={() => setTabLoan("balloon")}>
-              בלון (עד 60 ח׳)
-            </Pill>
-          </div>
-
-          <div style={{ marginTop: 10 }}>
-            <H3>מחיר רכב</H3>
-            <input
-              style={S.input}
-              inputMode="numeric"
-              value={price}
-              onChange={(e) => setPrice(+e.target.value || 0)}
-            />
-          </div>
-
-          <div style={{ marginTop: 10 }}>
-            <H3>מקדמה</H3>
-            <input
-              style={S.input}
-              inputMode="numeric"
-              value={down}
-              onChange={(e) => setDown(+e.target.value || 0)}
-            />
-          </div>
-
-          <div style={{ marginTop: 10 }}>
-            <H3>מספר חודשים</H3>
-            <input
-              style={S.slider}
-              type="range"
-              min={tabLoan === "regular" ? 12 : 12}
-              max={tabLoan === "regular" ? 100 : 60}
-              value={months}
-              onChange={(e) => setMonths(+e.target.value)}
-            />
-            <div><b>{months}</b> ח׳</div>
-          </div>
-
-          {tabLoan === "balloon" && (
-            <div style={{ marginTop: 10 }}>
-              <H3>סכום בלון בסוף התקופה (עד 50% ממחיר הרכב)</H3>
-              <input
-                style={S.slider}
-                type="range"
-                min={0}
-                max={0.5}
-                step={0.01}
-                value={balloon}
-                onChange={(e) => setBalloon(+e.target.value)}
-              />
-              <div>
-                בלון: <Money val={price * balloon} />
-              </div>
-            </div>
-          )}
-
-          <div
-            style={{
-              marginTop: 12,
-              padding: 12,
-              borderRadius: 16,
-              background: "#f8fafc",
-              border: "1px solid #e2e8f0",
-              display: "grid",
-              gap: 6,
-            }}
-          >
-            <div>
-              החזר חודשי משוער: <Money val={pay} />
-            </div>
-            <div>
-              סכום מימון: <Money val={Math.max(0, price - down)} />
-            </div>
-            {tabLoan === "balloon" && (
-              <div>
-                בלון לסוף התקופה: <Money val={price * balloon} />
-              </div>
-            )}
-          </div>
-
-          <div style={{ ...S.small, marginTop: 8 }}>
-            * החישוב להמחשה בלבד; ההצעה הסופית תיקבע לאחר בדיקה אישית.
-          </div>
-
-          <div style={{ marginTop: 10 }}>
-            <a
-              href={WA(
-                `שלום R&M, בקשת חישוב מימון:
-סוג מסלול: ${tabLoan === "balloon" ? "בלון" : "רגיל"}
-מחיר רכב: ${price} ₪
-מקדמה: ${down} ₪
-חודשים: ${months}
-בלון: ${tabLoan === "balloon" ? Math.round(price * balloon) + " ₪" : "אין"}
-החזר חודשי משוער: ${Math.round(pay)} ₪`
-              )}
-              style={{ ...S.btn, ...S.btnPrimary }}
-            >
-              בקשת הצעה בוואטסאפ
-            </a>
-          </div>
-        </section>
-
-        {/* יצירת קשר */}
-        <section id="lead" style={S.section} aria-label="יצירת קשר">
-          <h2 style={S.h2}>יצירת קשר</h2>
-          <div style={S.sub}>
-            נחזור אליך עם הצעה מותאמת אישית — בלי לחץ לחתום, רק כשנמצא עבורך את
-            הטוב ביותר.
-          </div>
-
-          <div style={{ display: "grid", gap: 10 }}>
-            <input
-              style={S.input}
-              placeholder="שם מלא"
-              value={lead.name}
-              onChange={(e) => setLead({ ...lead, name: e.target.value })}
-            />
-            <input
-              style={S.input}
-              placeholder="טלפון"
-              inputMode="tel"
-              value={lead.phone}
-              onChange={(e) => setLead({ ...lead, phone: e.target.value })}
-            />
-            <input
-              style={S.input}
-              placeholder="אימייל"
-              inputMode="email"
-              value={lead.email}
-              onChange={(e) => setLead({ ...lead, email: e.target.value })}
-            />
-            <input
-              style={S.input}
-              placeholder="עיר"
-              value={lead.city}
-              onChange={(e) => setLead({ ...lead, city: e.target.value })}
-            />
-            <textarea
-              style={{ ...S.input, height: 110, paddingTop: 10 }}
-              placeholder="מה חשוב לך ברכב החדש?"
-              value={lead.message}
-              onChange={(e) => setLead({ ...lead, message: e.target.value })}
-            />
-            <button style={{ ...S.btn, ...S.btnPrimary }} onClick={submitLead}>
-              שלחו ונחזור אליכם
-            </button>
-          </div>
-        </section>
-
-        {/* טרייד-אין */}
-        <section id="tradein" style={S.section} aria-label="טרייד-אין אונליין">
-          <h2 style={S.h2}>טרייד־אין אונליין</h2>
-          <div style={S.sub}>
-            הערכת שווי מהירה מרחוק וקידום בעסקה חדשה — ממלאים טופס מסודר ונחזור
-            עם הצעה.
-          </div>
-
-          <div style={{ display: "grid", gap: 10 }}>
-            <input
-              style={S.input}
-              placeholder="שם מלא"
-              value={ti.name}
-              onChange={(e) => setTI({ ...ti, name: e.target.value })}
-            />
-            <input
-              style={S.input}
-              placeholder="טלפון"
-              inputMode="tel"
-              value={ti.phone}
-              onChange={(e) => setTI({ ...ti, phone: e.target.value })}
-            />
-            <input
-              style={S.input}
-              placeholder="אימייל"
-              inputMode="email"
-              value={ti.email}
-              onChange={(e) => setTI({ ...ti, email: e.target.value })}
-            />
-            <input
-              style={S.input}
-              placeholder="עיר"
-              value={ti.city}
-              onChange={(e) => setTI({ ...ti, city: e.target.value })}
-            />
-
-            <div style={S.row}>
-              <input
-                style={{ ...S.input, flex: 1, minWidth: 140 }}
-                placeholder="מותג"
-                value={ti.brand}
-                onChange={(e) => setTI({ ...ti, brand: e.target.value })}
-              />
-              <input
-                style={{ ...S.input, flex: 1, minWidth: 140 }}
-                placeholder="דגם"
-                value={ti.model}
-                onChange={(e) => setTI({ ...ti, model: e.target.value })}
-              />
-            </div>
-
-            <div style={S.row}>
-              <input
-                style={{ ...S.input, flex: 1, minWidth: 140 }}
-                placeholder="מס' רישוי"
-                value={ti.plate}
-                onChange={(e) => setTI({ ...ti, plate: e.target.value })}
-              />
-              <input
-                style={{ ...S.input, flex: 1, minWidth: 140 }}
-                placeholder="שנת יצור"
-                inputMode="numeric"
-                value={ti.year}
-                onChange={(e) => setTI({ ...ti, year: e.target.value })}
-              />
-              <input
-                style={{ ...S.input, flex: 1, minWidth: 140 }}
-                placeholder="ק״מ"
-                inputMode="numeric"
-                value={ti.km}
-                onChange={(e) => setTI({ ...ti, km: e.target.value })}
-              />
-            </div>
-
-            <textarea
-              style={{ ...S.input, height: 110, paddingTop: 10 }}
-              placeholder="הערות"
-              value={ti.notes}
-              onChange={(e) => setTI({ ...ti, notes: e.target.value })}
-            />
-            <button style={{ ...S.btn, ...S.btnGhost }} onClick={submitTI}>
-              שלחו הערכה בוואטסאפ
-            </button>
-          </div>
-        </section>
-
-        {/* פוטר עם דגשים */}
-        <footer style={S.footer}>
-          <div style={{ fontWeight: 900, color: "white", marginBottom: 8 }}>R&amp;M</div>
-          <ul style={{ margin: 0, paddingInlineStart: 18 }}>
-            <li>ליווי מלא בהתאמת הרכב לצרכים שלך.</li>
-            <li>ליווי מלא בתהליך המימון מול חברות ובנקים — עד שמוצאים את המסלול המשתלם ביותר.</li>
-            <li>שירות VIP עד ואחרי המסירה — מצטרפים למשפחת R&amp;M.</li>
-          </ul>
-
-          <div style={{ ...S.chipBar, marginTop: 12 }}>
-            <a href={WA()} style={S.chipLight}>
-              וואטסאפ
-            </a>
-            <a href={`tel:${PHONE_HUMAN.replaceAll("-", "")}`} style={S.chipLight}>
-              חיוג {PHONE_HUMAN}
-            </a>
-          </div>
-
-          <div style={{ marginTop: 10, fontSize: 12, color: "#94a3b8" }}>
-            © R&amp;M 2025 · חדש 0 ק״מ · כל הזכויות שמורות.
-          </div>
-        </footer>
+        </label>
+        <label className="field">
+          <span>אימייל</span>
+          <input type="email" value={form.email} onChange={on("email")} />
+        </label>
+        <label className="field">
+          <span>עיר</span>
+          <input value={form.city} onChange={on("city")} />
+        </label>
+        <label className="field">
+          <span>מותג</span>
+          <input value={form.brand} onChange={on("brand")} />
+        </label>
+        <label className="field">
+          <span>דגם</span>
+          <input value={form.model} onChange={on("model")} />
+        </label>
+        <label className="field">
+          <span>מס׳ רישוי</span>
+          <input value={form.license} onChange={on("license")} />
+        </label>
+        <label className="field">
+          <span>שנת יצור</span>
+          <input inputMode="numeric" value={form.year} onChange={on("year")} />
+        </label>
+        <label className="field">
+          <span>ק״מ</span>
+          <input inputMode="numeric" value={form.km} onChange={on("km")} />
+        </label>
       </div>
+      <label className="field">
+        <span>הערות</span>
+        <textarea rows="3" value={form.notes} onChange={on("notes")} />
+      </label>
+      <label className="field">
+        <span>תמונות הרכב</span>
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={(e) => setForm({ ...form, photos: [...e.target.files] })}
+        />
+        <div className="tiny muted">את התמונות נצרף/נשלח בהודעת ווטסאפ המשך.</div>
+      </label>
+      <button className="btn" type="submit">
+        שלחו הערכה בווטסאפ
+      </button>
+    </form>
+  );
+}
+
+/* ===== אפליקציה ===== */
+export default function App() {
+  return (
+    <div className="app" dir="rtl">
+      {/* עליון דביק */}
+      <div className="topbar">
+        <a className="brand" href="#hero" aria-label="R&M בית">
+          R&M
+        </a>
+        <a className="btn btn--call" href={`tel:${PHONE_HUMAN.replaceAll("-", "")}`}>
+          חייגו {PHONE_HUMAN}
+        </a>
+        <a className="btn btn--ghost" href={WA()}>
+          דברו איתי בווטסאפ
+        </a>
+      </div>
+
+      {/* גיבור */}
+      <header id="hero" className="hero card hero--gradient" role="banner">
+        <h1 className="h1">
+          R&amp;M רכבי יוקרה וספורט בהתאמה אישית
+        </h1>
+        <p className="lead">
+          מתמחים בכל סוגי הרכבים החדשים · מציאת מימון משתלם במיוחד · ליווי מלא עד
+          המסירה וגם לאחריה.
+        </p>
+      </header>
+
+      {/* סיפור קצר עלינו */}
+      <Section
+        title="מי אנחנו"
+        subtitle="יחס VIP, שקיפות מלאה ומיקוד בתוצאה: רכב שמתאים לך ומימון שנוח לך."
+        id="about"
+      >
+        <ul className="bullets">
+          <li>מוצאים לך את הרכב המתאים – רק אז חותמים.</li>
+          <li>בדיקת מימון רחבה מול בנקים וחברות – עד שמוצאים את המסלול המשתלם ביותר.</li>
+          <li>ליווי יד ביד עד המסירה, וגם אחרי – מצטרפים למשפחת R&amp;M.</li>
+        </ul>
+      </Section>
+
+      {/* מחשבון הלוואה */}
+      <Section
+        id="loan"
+        title="מחשבון הלוואה"
+        subtitle="בחרו מסלול, הזינו מחיר ומקדמה ושחקו במספר התשלומים. במסלול בלון בוחרים סכום בלון — עד 50% ממחיר הרכב."
+      >
+        <LoanCalculator />
+      </Section>
+
+      {/* מאתר חכם כצ׳אט */}
+      <Section
+        id="smart"
+        title="מאתר רכב חכם"
+        subtitle="צ׳אט קצר שמחזיר התאמות עם החזר חודשי משוער – כדי להתחיל ממדויק."
+      >
+        <SmartMatcher />
+      </Section>
+
+      {/* יצירת קשר + טרייד־אין */}
+      <div className="grid2">
+        <ContactForm />
+        <TradeInForm />
+      </div>
+
+      {/* פוטר */}
+      <footer className="footer card">
+        <div className="foot-brand">R&amp;M</div>
+        <p className="muted">
+          רכבי יוקרה וספורט בהתאמה אישית · מציאת מימון משתלם בתנאים מיוחדים.
+        </p>
+        <div className="row gap">
+          <a className="btn" href={WA("שלום, אשמח להצעה מותאמת אישית")}>
+            ווטסאפ
+          </a>
+          <a className="btn btn--ghost" href={`tel:${PHONE_HUMAN.replaceAll("-", "")}`}>
+            חייגו {PHONE_HUMAN}
+          </a>
+        </div>
+        <div className="tiny muted">© R&amp;M מוטורס 2025 · כל הזכויות שמורות</div>
+      </footer>
     </div>
   );
 }
