@@ -1,113 +1,301 @@
-:root{
-  --bg:#f7f7fb;
-  --text:#111;
-  --muted:#6a6a78;
-  --brand1:#7b4dff;
-  --brand2:#ff9f2f;
-  --card:#fff;
-  --ring: rgba(123,77,255,.25);
-  --shadow: 0 10px 30px rgba(0,0,0,.08);
-  --radius: 22px;
+/* === בסיס כללי === */
+body {
+  margin: 0;
+  font-family: "Heebo", "Alef", Arial, sans-serif;
+  direction: rtl;
+  background: #fafafa;
+  color: #222;
+  line-height: 1.6;
 }
 
-*{box-sizing:border-box}
-html,body,#root{height:100%}
-body{margin:0; font-family:system-ui, "Rubik", "Heebo", Arial; background:var(--bg); color:var(--text);}
-
-main{max-width:980px; margin:0 auto; padding-bottom:80px}
-.section{padding:28px 14px}
-.section-head h2{margin:0 0 6px 0}
-.section-head .muted{color:var(--muted); margin:0 0 14px}
-
-.topbar{
-  position:sticky; top:0; z-index:20;
-  display:flex; gap:10px; align-items:center; justify-content:flex-start;
-  padding:10px; background:linear-gradient(90deg, #eee, #fafafa);
-  border-bottom:1px solid #e8e8ee;
-}
-.brand-chip{
-  margin-inline-start:auto; background:var(--brand2); color:#111;
-  padding:.35rem .7rem; border-radius:999px; font-weight:700;
-  box-shadow:var(--shadow);
+* {
+  box-sizing: border-box;
 }
 
-.hero{
-  margin:8px 10px 2px; border-radius:28px;
-  background:
-    radial-gradient(1200px 280px at 10% -10%, rgba(255,255,255,.65), transparent),
-    linear-gradient(110deg, var(--brand1), var(--brand2));
-  padding:32px 18px; color:#fff; position:relative; overflow:hidden;
-}
-.hero .hero-glass{
-  background:rgba(255,255,255,.15);
-  backdrop-filter: blur(6px);
-  border-radius:20px;
-  padding:14px;
-}
-.hero h1{margin:0 0 6px; font-size:1.35rem}
-.hero .muted{color:#f4f4f8}
-
-.card{
-  background:var(--card); border-radius:var(--radius);
-  box-shadow: var(--shadow);
-  padding:16px;
+h1, h2, h3, .h1, .h2, .h3 {
+  margin: 0 0 0.5em;
+  font-weight: 700;
 }
 
-/* Finder */
-.finder-controls{display:grid; gap:12px; grid-template-columns:1fr}
-.control label{display:block; font-weight:600; margin-bottom:6px}
-.pill-row{display:flex; gap:8px; flex-wrap:wrap}
-.pill{border:1px solid #ddd; background:#fff; color:#333; padding:.45rem .8rem; border-radius:999px}
-.pill.on{border-color:var(--brand1); box-shadow:0 0 0 3px var(--ring); color:#000}
+.h1 { font-size: 2rem; }
+.h2 { font-size: 1.5rem; }
+.h3 { font-size: 1.2rem; }
 
-.seg{display:flex; gap:8px; flex-wrap:wrap}
-.segbtn{padding:.5rem .8rem; border-radius:999px; border:1px solid #ddd; background:#fff}
-.segbtn.on{border-color:var(--brand1); box-shadow:0 0 0 3px var(--ring)}
-
-.cars-grid{display:grid; grid-template-columns:1fr; gap:14px; margin-top:12px}
-@media(min-width:720px){ .cars-grid{grid-template-columns:1fr 1fr} }
-
-.car-card{display:grid; grid-template-columns:120px 1fr; gap:12px; background:#fff; border-radius:18px; box-shadow:var(--shadow); padding:12px}
-.car-imgwrap{position:relative; background:#fff; border-radius:14px; display:flex; align-items:center; justify-content:center}
-.car-imgwrap img{max-width:100%; max-height:90px; display:block}
-.img-fallback{display:none; align-items:center; justify-content:center; width:100%; height:90px; background:#fff; border:1px dashed #e8e8ef; border-radius:12px; color:#bbb; font-weight:800; font-size:28px}
-
-.chips{position:absolute; top:6px; inset-inline-start:6px; display:flex; gap:6px}
-.chip{background:#111; color:#fff; font-size:.7rem; padding:.2rem .45rem; border-radius:999px; opacity:.9}
-
-.car-info h3{margin:.2rem 0; font-size:1.05rem}
-.car-info .muted{color:var(--muted)}
-
-.monthly{margin-top:6px}
-.monthly .price{font-size:1rem}
-.monthly .note{font-size:.8rem; color:var(--muted)}
-
-.actions{display:flex; gap:8px; margin-top:8px; flex-wrap:wrap}
-.btn{border:none; padding:.7rem 1rem; border-radius:999px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; box-shadow:var(--shadow)}
-.btn.primary{background:#111; color:#fff}
-.btn.dark{background:#111; color:#fff}
-.btn.ghost{background:#fff; color:#111; border:1px solid #ddd}
-.btn.wide{width:100%}
-.btn.sm{padding:.45rem .8rem}
-
-/* Forms */
-.form{display:grid; gap:10px}
-.form input, .form textarea, .control select, .calc input[type="text"], .calc input:not([type=range]){
-  width:100%; border:1px solid #e5e5ee; border-radius:14px; padding:.8rem .9rem; font-size:1rem; background:#fff
+p, .muted, .tiny {
+  margin: 0.5em 0;
 }
-input[type="range"]{width:100%}
 
-.calc .result{display:flex; justify-content:space-between; align-items:center; padding:.8rem 1rem; background:#fafafd; border-radius:14px; border:1px solid #eee}
-.calc .big{font-size:1.3rem; font-weight:800}
+.muted {
+  color: #555;
+}
+.tiny {
+  font-size: 0.85rem;
+  color: #777;
+}
 
-/* Bottom banner */
-.banner-bottom{background: linear-gradient(180deg,#fff, #f2ecff); border-radius:24px; margin:6px 12px; padding:18px}
-.ticks{margin:0; padding-inline-start:20px}
-.ticks li{margin:.4rem 0}
+ul.bullets {
+  padding: 0 1em;
+  margin: 0.5em 0;
+}
+ul.bullets li {
+  margin-bottom: 0.5em;
+}
 
-/* Footer */
-.footer{display:flex; gap:12px; align-items:center; justify-content:space-between; padding:18px 12px; color:#333}
-.footer .logo{font-weight:900; font-size:1.2rem}
+/* === טופ-בר === */
+.topbar {
+  display: flex;
+  gap: 0.5em;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0.8em 1em;
+  background: #fff;
+  border-bottom: 1px solid #eee;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.topbar .brand {
+  font-weight: 900;
+  font-size: 1.2rem;
+  color: #ff7b00;
+  text-decoration: none;
+  margin-left: auto;
+}
 
-/* Accessibility tweaks */
-.btn:focus, .pill:focus, .segbtn:focus, input:focus, select:focus, textarea:focus { outline:none; box-shadow:0 0 0 3px var(--ring) }
+/* === כפתורים === */
+.btn {
+  display: inline-block;
+  padding: 0.7em 1.2em;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: 0.2s;
+  background: #ff7b00;
+  color: #fff;
+}
+.btn:hover {
+  background: #e36e00;
+}
+.btn--ghost {
+  background: #fff;
+  color: #222;
+  border: 2px solid #ddd;
+}
+.btn--ghost:hover {
+  border-color: #bbb;
+}
+.btn--call {
+  background: #111;
+  color: #fff;
+}
+
+/* === טאבים / פילטרים === */
+.pill {
+  padding: 0.4em 0.9em;
+  border-radius: 999px;
+  background: #f1f1f1;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: 0.2s;
+}
+.pill--active {
+  background: #ff7b00;
+  color: #fff;
+}
+
+/* === כרטיסים / סקשנים === */
+.card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 1.5em;
+  margin: 1em;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.card--soft {
+  background: #fafafa;
+  border: 1px solid #eee;
+}
+
+.section {
+  margin: 2em 0;
+}
+
+.section__head {
+  margin-bottom: 1em;
+}
+
+/* === Hero === */
+.hero {
+  text-align: center;
+  padding: 3em 1.5em;
+}
+.hero--gradient {
+  background: linear-gradient(135deg, #8a2be2, #ff7b00);
+  color: #fff;
+}
+.hero .lead {
+  font-size: 1.2rem;
+  font-weight: 400;
+}
+
+/* === טפסים === */
+.form label span {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.3em;
+}
+.field input, 
+.field textarea {
+  width: 100%;
+  padding: 0.6em 0.8em;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 1rem;
+}
+.field textarea {
+  resize: vertical;
+}
+.form button {
+  margin-top: 1em;
+  width: 100%;
+}
+
+/* === גריד === */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1em;
+}
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5em;
+}
+@media (min-width: 800px) {
+  .grid2 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* === מחשבון הלוואה === */
+.loan .tabs {
+  display: flex;
+  gap: 0.5em;
+  margin-bottom: 1em;
+}
+.tab {
+  flex: 1;
+  padding: 0.6em;
+  border: none;
+  border-radius: 10px;
+  background: #eee;
+  cursor: pointer;
+  font-weight: 600;
+}
+.tab.is-active {
+  background: #ff7b00;
+  color: #fff;
+}
+.loan .field {
+  margin: 1em 0;
+}
+.loan .row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.loan input[type="range"] {
+  width: 100%;
+}
+.result {
+  margin: 1em 0;
+}
+.result__item {
+  display: flex;
+  justify-content: space-between;
+  margin: 0.3em 0;
+}
+.result__value {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+/* === מאתר רכב חכם === */
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+}
+.chat__head {
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5em;
+}
+.chat__head .bot {
+  font-size: 1.5rem;
+}
+.chat__step .q {
+  font-weight: 600;
+  margin-bottom: 0.8em;
+}
+.matches {
+  list-style: none;
+  padding: 0;
+  margin: 1em 0;
+}
+.match {
+  margin-bottom: 1em;
+}
+.match__title {
+  font-weight: 700;
+}
+.match__monthly {
+  margin: 0.5em 0;
+  font-size: 1.1rem;
+  color: #ff7b00;
+  font-weight: 700;
+}
+
+/* === פוטר === */
+.footer {
+  text-align: center;
+  margin-top: 3em;
+}
+.footer .foot-brand {
+  font-weight: 800;
+  font-size: 1.4rem;
+  margin-bottom: 0.5em;
+}
+.footer .row {
+  margin: 1em 0;
+  justify-content: center;
+}
+
+/* === Utility === */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+.space-between {
+  justify-content: space-between;
+}
+.wrap {
+  flex-wrap: wrap;
+}
+.gap {
+  gap: 0.8em;
+}
+.end {
+  justify-content: flex-end;
+}
+.tight {
+  margin: 0;
+}
