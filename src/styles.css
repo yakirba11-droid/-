@@ -1,301 +1,106 @@
-/* === בסיס כללי === */
-body {
-  margin: 0;
-  font-family: "Heebo", "Alef", Arial, sans-serif;
-  direction: rtl;
-  background: #fafafa;
-  color: #222;
-  line-height: 1.6;
+:root{
+  --bg:#f6f6f7;
+  --card:#ffffff;
+  --ink:#111;
+  --muted:#6b7280;
+  --accent:#ff9f1a;
+  --grad1:#b079ff; --grad2:#ff8ea1; --grad3:#ffb25a;
+  --radius:24px;
 }
 
-* {
-  box-sizing: border-box;
+*{box-sizing:border-box}
+html,body,#root{height:100%}
+body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Heebo,Arial}
+.app{max-width:960px;margin:0 auto;padding:8px 12px 56px;color:var(--ink)}
+
+.topbar{
+  position:sticky;top:0;z-index:5;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 12px;margin:8px auto 12px;background:rgba(255,255,255,.8);
+  backdrop-filter: blur(6px); border-radius:32px; box-shadow:0 3px 16px rgba(0,0,0,.06)
+}
+.brand{font-weight:800;font-size:20px}
+.actions{display:flex;gap:8px}
+
+.hero{
+  border-radius:32px;padding:22px; color:#111;
+  background: radial-gradient(1200px 400px at 100% -20%, rgba(255,255,255,.65), rgba(255,255,255,.35)),
+              linear-gradient(135deg,var(--grad1),var(--grad2),var(--grad3));
+  box-shadow:0 12px 30px rgba(0,0,0,.08); margin:6px 0 16px;
+}
+.hero h1{margin:0 0 6px;font-size:28px;line-height:1.2}
+.hero p{margin:0;font-size:16px;opacity:.95}
+
+.card{
+  background:var(--card); border-radius:var(--radius); padding:16px 14px; margin:14px 0;
+  box-shadow:0 6px 20px rgba(0,0,0,.06)
+}
+.pill{
+  background:linear-gradient(180deg,#fff, #f5f1ff);
+  border-radius:28px; padding:18px; margin:16px 0; text-align:unset;
+  box-shadow:0 10px 24px rgba(0,0,0,.07)
 }
 
-h1, h2, h3, .h1, .h2, .h3 {
-  margin: 0 0 0.5em;
-  font-weight: 700;
+h2{margin:2px 0 12px;font-size:24px}
+.muted{color:var(--muted)}
+.tiny{font-size:12px}
+ul.bullets{margin:8px 0 12px;padding:0 24px}
+ul.bullets li{margin:6px 0}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  gap:8px;padding:12px 18px;border:none;border-radius:999px;
+  font-weight:800;text-decoration:none;cursor:pointer;transition:.2s;
+}
+.btn.primary{background:#111;color:#fff}
+.btn.ghost{background:#111;color:#fff}
+.btn.hollow{border:2px solid #111;color:#111;background:#fff}
+.btn:hover{transform:translateY(-1px)}
+.btn.full{width:100%}
+
+.chip{
+  padding:8px 14px;border-radius:999px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;margin:4px; font-weight:600
+}
+.chip.on{border-color:#7c3aed; box-shadow:0 0 0 4px rgba(124,58,237,.15)}
+.tabs{display:flex;gap:8px;margin:6px 0 8px}
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid .full{grid-column:1/-1}
+label{display:flex;flex-direction:column;gap:6px;font-weight:700}
+input,textarea,select{
+  appearance:none;border:1px solid #e5e7eb;border-radius:16px;padding:12px 14px;font-size:16px;background:#fff
+}
+input[type="range"]{width:100%}
+.rangeHint{margin-top:4px;color:var(--muted);font-size:14px}
+
+.calc .result{
+  margin:10px 0 2px;padding:12px;border-radius:16px;background:#f7f7fb
 }
 
-.h1 { font-size: 2rem; }
-.h2 { font-size: 1.5rem; }
-.h3 { font-size: 1.2rem; }
+.ctaRow{display:flex;gap:10px;align-items:center;margin-top:10px}
+.ctaRow .btn{flex:1}
 
-p, .muted, .tiny {
-  margin: 0.5em 0;
-}
+.chat{display:flex;flex-direction:column;gap:12px}
+.msg{background:#f4f4ff;border:1px dashed #d2d0ff;border-radius:16px;padding:12px}
+.msg.big{font-weight:800}
+.rangeWrap{display:flex;flex-direction:column;gap:8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
 
-.muted {
-  color: #555;
-}
-.tiny {
-  font-size: 0.85rem;
-  color: #777;
-}
+.resultBox{background:#fff; border:1px solid #eee;border-radius:16px;padding:12px}
+.rec{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border-radius:14px;background:#fafafa;margin:6px 0}
+.recTitle{font-weight:800}
+.recMeta{color:var(--muted)}
+.recPay{font-weight:800}
 
-ul.bullets {
-  padding: 0 1em;
-  margin: 0.5em 0;
-}
-ul.bullets li {
-  margin-bottom: 0.5em;
-}
+.steps{display:grid;gap:10px}
+.step{display:flex;flex-direction:column;gap:4px;padding:12px;border:1px solid #eee;border-radius:14px;background:#fff}
 
-/* === טופ-בר === */
-.topbar {
-  display: flex;
-  gap: 0.5em;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 0.8em 1em;
-  background: #fff;
-  border-bottom: 1px solid #eee;
-  position: sticky;
-  top: 0;
-  z-index: 50;
-}
-.topbar .brand {
-  font-weight: 900;
-  font-size: 1.2rem;
-  color: #ff7b00;
-  text-decoration: none;
-  margin-left: auto;
-}
+.topbar .btn.ghost{background:#111}
+.topbar .btn.hollow{border-color:#111}
 
-/* === כפתורים === */
-.btn {
-  display: inline-block;
-  padding: 0.7em 1.2em;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 600;
-  text-align: center;
-  text-decoration: none;
-  border: none;
-  cursor: pointer;
-  transition: 0.2s;
-  background: #ff7b00;
-  color: #fff;
-}
-.btn:hover {
-  background: #e36e00;
-}
-.btn--ghost {
-  background: #fff;
-  color: #222;
-  border: 2px solid #ddd;
-}
-.btn--ghost:hover {
-  border-color: #bbb;
-}
-.btn--call {
-  background: #111;
-  color: #fff;
-}
-
-/* === טאבים / פילטרים === */
-.pill {
-  padding: 0.4em 0.9em;
-  border-radius: 999px;
-  background: #f1f1f1;
-  border: none;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: 0.2s;
-}
-.pill--active {
-  background: #ff7b00;
-  color: #fff;
-}
-
-/* === כרטיסים / סקשנים === */
-.card {
-  background: #fff;
-  border-radius: 20px;
-  padding: 1.5em;
-  margin: 1em;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-.card--soft {
-  background: #fafafa;
-  border: 1px solid #eee;
-}
-
-.section {
-  margin: 2em 0;
-}
-
-.section__head {
-  margin-bottom: 1em;
-}
-
-/* === Hero === */
-.hero {
-  text-align: center;
-  padding: 3em 1.5em;
-}
-.hero--gradient {
-  background: linear-gradient(135deg, #8a2be2, #ff7b00);
-  color: #fff;
-}
-.hero .lead {
-  font-size: 1.2rem;
-  font-weight: 400;
-}
-
-/* === טפסים === */
-.form label span {
-  display: block;
-  font-weight: 600;
-  margin-bottom: 0.3em;
-}
-.field input, 
-.field textarea {
-  width: 100%;
-  padding: 0.6em 0.8em;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  font-size: 1rem;
-}
-.field textarea {
-  resize: vertical;
-}
-.form button {
-  margin-top: 1em;
-  width: 100%;
-}
-
-/* === גריד === */
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1em;
-}
-.grid2 {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5em;
-}
-@media (min-width: 800px) {
-  .grid2 {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-/* === מחשבון הלוואה === */
-.loan .tabs {
-  display: flex;
-  gap: 0.5em;
-  margin-bottom: 1em;
-}
-.tab {
-  flex: 1;
-  padding: 0.6em;
-  border: none;
-  border-radius: 10px;
-  background: #eee;
-  cursor: pointer;
-  font-weight: 600;
-}
-.tab.is-active {
-  background: #ff7b00;
-  color: #fff;
-}
-.loan .field {
-  margin: 1em 0;
-}
-.loan .row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.loan input[type="range"] {
-  width: 100%;
-}
-.result {
-  margin: 1em 0;
-}
-.result__item {
-  display: flex;
-  justify-content: space-between;
-  margin: 0.3em 0;
-}
-.result__value {
-  font-weight: 700;
-  font-size: 1.1rem;
-}
-
-/* === מאתר רכב חכם === */
-.chat {
-  display: flex;
-  flex-direction: column;
-  gap: 1em;
-}
-.chat__head {
-  display: flex;
-  align-items: center;
-  gap: 0.8em;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 0.5em;
-}
-.chat__head .bot {
-  font-size: 1.5rem;
-}
-.chat__step .q {
-  font-weight: 600;
-  margin-bottom: 0.8em;
-}
-.matches {
-  list-style: none;
-  padding: 0;
-  margin: 1em 0;
-}
-.match {
-  margin-bottom: 1em;
-}
-.match__title {
-  font-weight: 700;
-}
-.match__monthly {
-  margin: 0.5em 0;
-  font-size: 1.1rem;
-  color: #ff7b00;
-  font-weight: 700;
-}
-
-/* === פוטר === */
-.footer {
-  text-align: center;
-  margin-top: 3em;
-}
-.footer .foot-brand {
-  font-weight: 800;
-  font-size: 1.4rem;
-  margin-bottom: 0.5em;
-}
-.footer .row {
-  margin: 1em 0;
-  justify-content: center;
-}
-
-/* === Utility === */
-.row {
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
-}
-.space-between {
-  justify-content: space-between;
-}
-.wrap {
-  flex-wrap: wrap;
-}
-.gap {
-  gap: 0.8em;
-}
-.end {
-  justify-content: flex-end;
-}
-.tight {
-  margin: 0;
+/* התאמה לנייד */
+@media (max-width:720px){
+  .grid{grid-template-columns:1fr}
+  .hero h1{font-size:24px}
+  .hero p{font-size:14px}
 }
